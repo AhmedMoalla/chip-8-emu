@@ -1,0 +1,12 @@
+.{
+    .name = .chip_8_emu,
+    .version = "0.0.0",
+    .fingerprint = 0x5cea5001c698275e,
+    .minimum_zig_version = "0.15.1",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
