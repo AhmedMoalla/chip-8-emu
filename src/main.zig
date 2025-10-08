@@ -1,6 +1,7 @@
 const std = @import("std");
 const State = @import("State.zig");
 const instr = @import("instructions.zig");
+const debug = @import("debug.zig");
 
 pub fn main() !void {
     const args = parseArgs();
