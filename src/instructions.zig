@@ -3,6 +3,8 @@ const State = @import("State.zig");
 
 const InstructionFn = fn (instruction: u16, state: *State) void;
 
+const log = std.log.scoped(.instr);
+
 pub fn execute(instruction: u16, state: *State) void {
     const instruction_fn: *const InstructionFn = switch (instruction) {
         0xE0 => CLS,
@@ -57,7 +59,7 @@ pub fn execute(instruction: u16, state: *State) void {
 }
 
 fn unhandled(instruction: u16, _: *State) void {
-    std.log.debug("{X:0>4} Unhandled", .{instruction});
+    log.debug("{X:0>4} Unhandled", .{instruction});
 }
 
 // For instruction in format PNNN returns NNN
@@ -99,13 +101,13 @@ test "helper functions" {
 // This instruction is only used on the old computers on which Chip-8 was originally implemented. It is ignored by modern interpreters.
 fn SYS(instruction: u16, _: *State) void {
     const nnn = pnnn(instruction);
-    std.log.debug("{X:0>4} SYS NNN={X:0>3}", .{ instruction, nnn });
+    log.debug("{X:0>4} SYS NNN={X:0>3}", .{ instruction, nnn });
 }
 
 // 00E0 - CLS
 // Clear the display.
 fn CLS(instruction: u16, _: *State) void {
-    std.log.debug("{X:0>4} CLS", .{instruction});
+    log.debug("{X:0>4} CLS", .{instruction});
 }
 
 // 00EE - RET
@@ -114,7 +116,7 @@ fn CLS(instruction: u16, _: *State) void {
 fn RET(instruction: u16, state: *State) void {
     state.pc = state.stack[state.sp];
     state.sp -= 1;
-    std.log.debug("{X:0>4} RET", .{instruction});
+    log.debug("{X:0>4} RET", .{instruction});
 }
 
 test "RET" {
@@ -134,7 +136,7 @@ test "RET" {
 fn JP(instruction: u16, state: *State) void {
     const nnn = pnnn(instruction);
     state.pc = nnn;
-    std.log.debug("{X:0>4} JP NNN={X:0>3}", .{ instruction, nnn });
+    log.debug("{X:0>4} JP NNN={X:0>3}", .{ instruction, nnn });
 }
 
 test "JP" {
@@ -148,7 +150,7 @@ test "JP" {
 // The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
 fn CALL(instruction: u16, _: *State) void {
     const nnn = pnnn(instruction);
-    std.log.debug("{X:0>4} CALL NNN={X:0>3}", .{ instruction, nnn });
+    log.debug("{X:0>4} CALL NNN={X:0>3}", .{ instruction, nnn });
 }
 
 // 3xkk - SE Vx, byte
@@ -159,7 +161,7 @@ fn SE(instruction: u16, state: *State) void {
     if (state.V[instr.x] == instr.kk) {
         state.pc += (2 * State.instruction_size);
     }
-    std.log.debug("{X:0>4} SE X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
+    log.debug("{X:0>4} SE X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
 }
 
 test "SE" {
@@ -178,7 +180,7 @@ fn SNE(instruction: u16, state: *State) void {
     if (state.V[instr.x] != instr.kk) {
         state.pc += (2 * State.instruction_size);
     }
-    std.log.debug("{X:0>4} SNE X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
+    log.debug("{X:0>4} SNE X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
 }
 
 test "SNE" {
@@ -197,7 +199,7 @@ fn SEV(instruction: u16, state: *State) void {
     if (state.V[instr.x] == state.V[instr.y]) {
         state.pc += (2 * State.instruction_size);
     }
-    std.log.debug("{X:0>4} SEV X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} SEV X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "SEV" {
@@ -215,7 +217,7 @@ test "SEV" {
 fn LD(instruction: u16, state: *State) void {
     const instr = pxkk(instruction);
     state.V[instr.x] = instr.kk;
-    std.log.debug("{X:0>4} LD X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
+    log.debug("{X:0>4} LD X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
 }
 
 test "LD" {
@@ -230,7 +232,7 @@ test "LD" {
 fn ADD(instruction: u16, state: *State) void {
     const instr = pxkk(instruction);
     state.V[instr.x] = @addWithOverflow(state.V[instr.x], instr.kk).@"0";
-    std.log.debug("{X:0>4} ADD X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
+    log.debug("{X:0>4} ADD X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
 }
 
 test "ADD" {
@@ -252,7 +254,7 @@ test "ADD" {
 fn LDV(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[instr.x] = state.V[instr.y];
-    std.log.debug("{X:0>4} LDV X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} LDV X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "LDV" {
@@ -270,7 +272,7 @@ test "LDV" {
 fn OR(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[instr.x] |= state.V[instr.y];
-    std.log.debug("{X:0>4} OR X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} OR X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "OR" {
@@ -290,7 +292,7 @@ test "OR" {
 fn AND(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[instr.x] &= state.V[instr.y];
-    std.log.debug("{X:0>4} AND X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} AND X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "AND" {
@@ -310,7 +312,7 @@ test "AND" {
 fn XOR(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[instr.x] ^= state.V[instr.y];
-    std.log.debug("{X:0>4} XOR X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} XOR X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "XOR" {
@@ -332,7 +334,7 @@ fn ADDV(instruction: u16, state: *State) void {
     const result = @addWithOverflow(state.V[instr.x], state.V[instr.y]);
     state.V[instr.x] = result.@"0";
     state.V[0xF] = result.@"1";
-    std.log.debug("{X:0>4} ADDV X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} ADDV X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "ADDV" {
@@ -357,7 +359,7 @@ fn SUB(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[0xF] = if (state.V[instr.x] > state.V[instr.y]) 1 else 0;
     state.V[instr.x] = @subWithOverflow(state.V[instr.x], state.V[instr.y]).@"0";
-    std.log.debug("{X:0>4} SUB X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} SUB X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "SUB" {
@@ -384,7 +386,7 @@ fn SHR(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[0xF] = state.V[instr.x] & 0x1;
     state.V[instr.x] >>= 1;
-    std.log.debug("{X:0>4} SHR X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} SHR X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "SHR" {
@@ -409,7 +411,7 @@ fn SUBN(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[0xF] = if (state.V[instr.y] > state.V[instr.x]) 1 else 0;
     state.V[instr.x] = @subWithOverflow(state.V[instr.y], state.V[instr.x]).@"0";
-    std.log.debug("{X:0>4} SUBN X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} SUBN X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "SUBN" {
@@ -436,7 +438,7 @@ fn SHL(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     state.V[0xF] = (state.V[instr.x] >> 7) & 0x1;
     state.V[instr.x] <<= 1;
-    std.log.debug("{X:0>4} SHL X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} SHL X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "SHL" {
@@ -456,7 +458,7 @@ fn SNEV(instruction: u16, state: *State) void {
     if (state.V[instr.x] != state.V[instr.y]) {
         state.pc += (2 * State.instruction_size);
     }
-    std.log.debug("{X:0>4} SNEV X={X} Y={X}", .{ instruction, instr.x, instr.y });
+    log.debug("{X:0>4} SNEV X={X} Y={X}", .{ instruction, instr.x, instr.y });
 }
 
 test "SNEV" {
@@ -474,7 +476,7 @@ test "SNEV" {
 fn LDI(instruction: u16, state: *State) void {
     const nnn = pnnn(instruction);
     state.I = nnn;
-    std.log.debug("{X:0>4} LDI NNN={X:0>3}", .{ instruction, nnn });
+    log.debug("{X:0>4} LDI NNN={X:0>3}", .{ instruction, nnn });
 }
 
 test "LDI" {
@@ -489,7 +491,7 @@ test "LDI" {
 fn JPV(instruction: u16, state: *State) void {
     const nnn = pnnn(instruction);
     state.pc = nnn + state.V[0];
-    std.log.debug("{X:0>4} JPV NNN={X:0>3}", .{ instruction, nnn });
+    log.debug("{X:0>4} JPV NNN={X:0>3}", .{ instruction, nnn });
 }
 
 test "JPV" {
@@ -507,7 +509,7 @@ fn RND(instruction: u16, state: *State) void {
     const instr = pxkk(instruction);
     const random_byte = state.prng.int(u8);
     state.V[instr.x] = random_byte & instr.kk;
-    std.log.debug("{X:0>4} RND X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
+    log.debug("{X:0>4} RND X={X} KK={X:0>2}", .{ instruction, instr.x, instr.kk });
 }
 
 test "RND" {
@@ -535,7 +537,7 @@ test "RND" {
 fn DRW(instruction: u16, _: *State) void {
     const instr = pxy0(instruction);
     const n = instruction & 0x000F;
-    std.log.debug("{X:0>4} DRW X={X} Y={X} N={X}", .{ instruction, instr.x, instr.y, n });
+    log.debug("{X:0>4} DRW X={X} Y={X} N={X}", .{ instruction, instr.x, instr.y, n });
 }
 
 // Ex9E - SKP Vx
@@ -543,7 +545,7 @@ fn DRW(instruction: u16, _: *State) void {
 // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
 fn SKP(instruction: u16, _: *State) void {
     const x = px00(instruction);
-    std.log.debug("{X:0>4} SKP X={X}", .{ instruction, x });
+    log.debug("{X:0>4} SKP X={X}", .{ instruction, x });
 }
 
 // ExA1 - SKNP Vx
@@ -551,7 +553,7 @@ fn SKP(instruction: u16, _: *State) void {
 // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
 fn SKNP(instruction: u16, _: *State) void {
     const x = px00(instruction);
-    std.log.debug("{X:0>4} SKNP X={X}", .{ instruction, x });
+    log.debug("{X:0>4} SKNP X={X}", .{ instruction, x });
 }
 
 // Fx07 - LD Vx, DT
@@ -560,7 +562,7 @@ fn SKNP(instruction: u16, _: *State) void {
 fn LDVDT(instruction: u16, state: *State) void {
     const x = px00(instruction);
     state.V[x] = state.delay_timer;
-    std.log.debug("{X:0>4} LDVDT X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDVDT X={X}", .{ instruction, x });
 }
 
 test "LDVDT" {
@@ -575,7 +577,7 @@ test "LDVDT" {
 // All execution stops until a key is pressed, then the value of that key is stored in Vx.
 fn LDK(instruction: u16, _: *State) void {
     const x = px00(instruction);
-    std.log.debug("{X:0>4} LDK X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDK X={X}", .{ instruction, x });
 }
 
 // Fx15 - LD DT, Vx
@@ -584,7 +586,7 @@ fn LDK(instruction: u16, _: *State) void {
 fn LDDTV(instruction: u16, state: *State) void {
     const x = px00(instruction);
     state.delay_timer = state.V[0xB];
-    std.log.debug("{X:0>4} LDDTV X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDDTV X={X}", .{ instruction, x });
 }
 
 test "LDDTV" {
@@ -600,7 +602,7 @@ test "LDDTV" {
 fn LDST(instruction: u16, state: *State) void {
     const x = px00(instruction);
     state.sound_timer = state.V[0xB];
-    std.log.debug("{X:0>4} LDST X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDST X={X}", .{ instruction, x });
 }
 
 test "LDST" {
@@ -616,7 +618,7 @@ test "LDST" {
 fn ADDI(instruction: u16, state: *State) void {
     const x = px00(instruction);
     state.I = state.I + state.V[x];
-    std.log.debug("{X:0>4} ADDI X={X}", .{ instruction, x });
+    log.debug("{X:0>4} ADDI X={X}", .{ instruction, x });
 }
 
 test "ADDI" {
@@ -633,7 +635,7 @@ test "ADDI" {
 // See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
 fn LDF(instruction: u16, _: *State) void {
     const x = px00(instruction);
-    std.log.debug("{X:0>4} LDF X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDF X={X}", .{ instruction, x });
 }
 
 // Fx33 - LD B, Vx
@@ -644,7 +646,7 @@ fn LDB(instruction: u16, state: *State) void {
     state.memory[state.I] = state.V[x] / 100;
     state.memory[state.I + 1] = (state.V[x] / 10) % 10;
     state.memory[state.I + 2] = state.V[x] % 10;
-    std.log.debug("{X:0>4} LDB X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDB X={X}", .{ instruction, x });
 }
 
 test "LDB" {
@@ -665,7 +667,7 @@ fn LDIVX(instruction: u16, state: *State) void {
     for (0..x) |i| {
         state.memory[state.I + i] = state.V[i];
     }
-    std.log.debug("{X:0>4} LDIVX X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDIVX X={X}", .{ instruction, x });
 }
 
 test "LDIVX" {
@@ -688,7 +690,7 @@ fn LDVXI(instruction: u16, state: *State) void {
     for (0..x) |i| {
         state.V[i] = state.memory[state.I + i];
     }
-    std.log.debug("{X:0>4} LDVXI X={X}", .{ instruction, x });
+    log.debug("{X:0>4} LDVXI X={X}", .{ instruction, x });
 }
 
 test "LDVXI" {
