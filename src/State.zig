@@ -66,3 +66,103 @@ test "loadROM" {
     try std.testing.expectEqualSlices(u8, &expected_memory, &memory);
     try std.testing.expectEqual(132, bytes_read);
 }
+
+pub fn print(self: State, what: struct { registers: bool = false, memory: bool = false }) void {
+    std.debug.print("==================================================================================\n", .{});
+    if (what.registers) {
+        std.debug.print("Registers\n", .{});
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
+        self.printRegisters();
+    }
+    if (what.registers and what.memory) {
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
+    }
+    if (what.memory) {
+        std.debug.print("Memory\n", .{});
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
+        self.printMemory();
+    }
+    std.debug.print("==================================================================================\n", .{});
+}
+
+fn printMemory(self: State) void {
+    const bytes_per_row = 16;
+
+    // Print header
+    std.debug.print("          ", .{});
+    for (0..bytes_per_row) |i| {
+        std.debug.print("{X:0>2} ", .{i});
+    }
+    std.debug.print("\n", .{});
+    std.debug.print("        ", .{});
+    for (0..bytes_per_row) |_| {
+        std.debug.print("---", .{});
+    }
+    std.debug.print("--", .{});
+    std.debug.print("\n", .{});
+
+    // Print rows
+    var i: usize = 0;
+    var skipped = false;
+    while (i < self.memory.len) : (i += bytes_per_row) {
+        const row_end = @min(i + bytes_per_row, self.memory.len);
+        const row = self.memory[i..row_end];
+
+        const is_zero_row = blk: {
+            for (row) |b| if (b != 0) break :blk false;
+            break :blk true;
+        };
+
+        const is_first = (i == 0);
+        const is_last = (row_end == self.memory.len);
+
+        if (is_zero_row and !is_first and !is_last) {
+            // collapse repeated zero lines
+            if (!skipped) {
+                std.debug.print("         *\n", .{});
+                skipped = true;
+            }
+            continue;
+        }
+
+        skipped = false;
+        std.debug.print("{X:0>8}: ", .{i});
+        for (row) |b| {
+            std.debug.print("{X:0>2} ", .{b});
+        }
+        std.debug.print("\n", .{});
+
+        // Print underline for PC if in this row
+        const pc = self.pc;
+        if (pc >= i and pc < row_end) {
+            const pc_offset = pc - i;
+            const prefix = 10 + pc_offset * 4; // spacing before marker
+            var j: usize = 0;
+            while (j < prefix) : (j += 1) {
+                std.debug.print(" ", .{});
+            }
+            std.debug.print("^^\n", .{});
+        }
+    }
+}
+
+fn printRegisters(self: State) void {
+    std.debug.print("PC    ", .{});
+    std.debug.print("I     ", .{});
+    std.debug.print("DT  ", .{});
+    std.debug.print("ST  ", .{});
+    for (0..self.V.len) |i| {
+        std.debug.print("V{X}  ", .{i});
+    }
+
+    std.debug.print("\n", .{});
+
+    std.debug.print("{X:0>4}  ", .{self.pc});
+    std.debug.print("{X:0>4}  ", .{self.I});
+    std.debug.print("{X:0>2}  ", .{self.delay_timer});
+    std.debug.print("{X:0>2}  ", .{self.sound_timer});
+    for (self.V) |value| {
+        std.debug.print("{X:0>2}  ", .{value});
+    }
+    std.debug.print("\n", .{});
+}
