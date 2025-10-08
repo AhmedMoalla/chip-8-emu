@@ -2,6 +2,7 @@ const std = @import("std");
 
 const State = @This();
 
+pub const instruction_size = 2;
 pub const stack_size = 16;
 pub const memory_size = 4096;
 pub const rom_loading_location = 0x200;
@@ -21,8 +22,18 @@ stack: [stack_size]u16 = [_]u16{0} ** stack_size,
 // Populated after initialization
 rom_size: usize = 0,
 
+// Used by RND instruction
+prng: std.Random = undefined,
+
 pub fn init(rom_path: []const u8) !State {
-    var state = State{};
+    var state = State{
+        .prng = rnd: {
+            var seed: u64 = undefined;
+            try std.posix.getrandom(std.mem.asBytes(&seed));
+            var prng = std.Random.DefaultPrng.init(seed);
+            break :rnd prng.random();
+        },
+    };
     state.rom_size = loadROM(rom_path, &state.memory) catch |err| switch (err) {
         error.FileNotFound => {
             std.log.err("Rom at '{s}' was not found", .{rom_path});

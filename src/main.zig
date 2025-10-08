@@ -6,7 +6,7 @@ pub fn main() !void {
     const args = parseArgs();
 
     var state = try State.init(args.rom_path);
-    while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += 2) {
+    while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += State.instruction_size) {
         const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
         instr.execute(instruction, &state);
     }
