@@ -140,14 +140,14 @@ pub fn printROM(rom_path: []const u8) void {
     std.debug.print("==================================================================================\n", .{});
 }
 
-pub fn printDisplay(display: []const u1) void {
+pub fn printDisplay(display: []const u8) void {
     for (0..State.display_height) |y| {
         for (0..State.display_width) |x| {
             const bit = display[y * State.display_width + x];
-            if (bit == 1) {
-                std.debug.print("▓", .{});
-            } else {
+            if (bit == 0) {
                 std.debug.print("░", .{});
+            } else {
+                std.debug.print("▓", .{});
             }
         }
         std.debug.print("\n", .{});

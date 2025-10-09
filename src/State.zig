@@ -7,8 +7,8 @@ pub const stack_size = 16;
 pub const memory_size = 4096;
 pub const rom_loading_location = 0x200;
 pub const sprite_width = 8;
-pub const display_width: usize = 128;
-pub const display_height: usize = 64;
+pub const display_width: usize = 64;
+pub const display_height: usize = 32;
 pub const display_resolution = display_width * display_height;
 
 pub const default_sprites_height = 5;
@@ -47,8 +47,9 @@ stack: [stack_size]u16 = [_]u16{0} ** stack_size,
 rom_size: usize = 0,
 
 // IO
-display: [display_resolution]u1 = [_]u1{0} ** display_resolution,
+display: [display_resolution]u8 = [_]u8{0} ** display_resolution,
 keys: [16]bool = [_]bool{false} ** 16,
+should_draw: bool = false,
 
 // Used by RND instruction
 prng: std.Random = undefined,

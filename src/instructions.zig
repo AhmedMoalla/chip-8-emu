@@ -608,6 +608,7 @@ fn DRW(instruction: u16, state: *State) void {
         }
     }
     state.pc += State.instruction_size;
+    state.should_draw = true;
 }
 
 test "DRW" {
@@ -621,6 +622,7 @@ test "DRW" {
     execute(0xD015, &state);
 
     try std.testing.expectEqual(0, state.V[0xF]);
+    try std.testing.expectEqual(true, state.should_draw);
 
     try std.testing.expectEqual(1, state.display[y * width + x]);
     try std.testing.expectEqual(1, state.display[y * width + x + 1]);
