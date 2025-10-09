@@ -11,6 +11,7 @@ pub const display_width: usize = 128;
 pub const display_height: usize = 64;
 pub const display_resolution = display_width * display_height;
 
+pub const default_sprites_height = 5;
 const default_sprites = [_]u8{
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -47,9 +48,15 @@ rom_size: usize = 0,
 
 // IO
 display: [display_resolution]u1 = [_]u1{0} ** display_resolution,
+keys: [16]bool = [_]bool{false} ** 16,
 
 // Used by RND instruction
 prng: std.Random = undefined,
+
+// Used by LDK instruction
+key_pressed: ?u8 = null,
+key_pressed_mutex: std.Thread.Mutex = std.Thread.Mutex{},
+key_pressed_condition: std.Thread.Condition = std.Thread.Condition{},
 
 pub fn init(rom_path: []const u8) !State {
     var state = State{
@@ -68,6 +75,15 @@ pub fn init(rom_path: []const u8) !State {
         else => return err,
     };
     return state;
+}
+
+pub fn keyPress(state: *State, key: u8) void {
+    {
+        state.key_pressed_mutex.lock();
+        defer state.key_pressed_mutex.unlock();
+        state.key_pressed = key;
+    }
+    state.key_pressed_condition.signal();
 }
 
 fn loadROM(path: []const u8, memory: *[memory_size]u8) !usize {

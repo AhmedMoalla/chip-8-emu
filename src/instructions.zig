@@ -649,17 +649,53 @@ test "DRW collision" {
 // Ex9E - SKP Vx
 // Skip next instruction if key with the value of Vx is pressed.
 // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
-fn SKP(instruction: u16, _: *State) void {
+fn SKP(instruction: u16, state: *State) void {
     const x = px00(instruction);
+    const key = state.V[x];
+    if (state.keys[key]) {
+        state.pc += (State.instruction_size * 2);
+    }
     log.debug("{X:0>4} SKP X={X}", .{ instruction, x });
+}
+
+test "SKP" {
+    var state = State{};
+    const initial_pc = state.pc;
+    state.keys[5] = true;
+    state.V[0xA] = 5;
+    execute(0xEA9E, &state);
+    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+
+    state.keys[5] = false;
+    state.V[0xA] = 5;
+    execute(0xEA9E, &state);
+    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
 }
 
 // ExA1 - SKNP Vx
 // Skip next instruction if key with the value of Vx is not pressed.
 // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
-fn SKNP(instruction: u16, _: *State) void {
+fn SKNP(instruction: u16, state: *State) void {
     const x = px00(instruction);
+    const key = state.V[x];
+    if (!state.keys[key]) {
+        state.pc += (State.instruction_size * 2);
+    }
     log.debug("{X:0>4} SKNP X={X}", .{ instruction, x });
+}
+
+test "SKNP" {
+    var state = State{};
+    const initial_pc = state.pc;
+    state.keys[5] = false;
+    state.V[0xA] = 5;
+    execute(0xEAA1, &state);
+    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+
+    state.keys[5] = true;
+    state.V[0xA] = 5;
+    execute(0xEAA1, &state);
+    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
 }
 
 // Fx07 - LD Vx, DT
@@ -681,9 +717,39 @@ test "LDVDT" {
 // Fx0A - LD Vx, K
 // Wait for a key press, store the value of the key in Vx.
 // All execution stops until a key is pressed, then the value of that key is stored in Vx.
-fn LDK(instruction: u16, _: *State) void {
+fn LDK(instruction: u16, state: *State) void {
     const x = px00(instruction);
+    state.key_pressed_mutex.lock();
+    defer state.key_pressed_mutex.unlock();
+    while (state.key_pressed == null) {
+        state.key_pressed_condition.wait(&state.key_pressed_mutex);
+    }
+    state.V[x] = state.key_pressed.?;
+    state.key_pressed = null;
     log.debug("{X:0>4} LDK X={X}", .{ instruction, x });
+}
+
+fn runLDK(instruction: u16, state: *State) void {
+    LDK(instruction, state);
+}
+
+test "LDK" {
+    std.testing.log_level = .debug;
+    var state = State{};
+
+    // 1. Start a thread that executes LDK => LDK should block the thread
+    const handle = try std.Thread.spawn(.{}, runLDK, .{ 0xFB0A, &state });
+
+    // 2. Check that Vx is zero (unchanged)
+    try std.testing.expectEqual(0, state.V[0xB]);
+
+    // 3. Simulate key press which should unblock the thread
+    state.keyPress(0xA);
+
+    handle.join();
+
+    // 4. Check that Vx is set to the key that was pressed
+    try std.testing.expectEqual(0xA, state.V[0xB]);
 }
 
 // Fx15 - LD DT, Vx
@@ -739,9 +805,18 @@ test "ADDI" {
 // Set I = location of sprite for digit Vx.
 // The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx.
 // See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
-fn LDF(instruction: u16, _: *State) void {
+fn LDF(instruction: u16, state: *State) void {
     const x = px00(instruction);
+    const sprite_number = state.V[x];
+    state.I = sprite_number * State.default_sprites_height;
     log.debug("{X:0>4} LDF X={X}", .{ instruction, x });
+}
+
+test "LDF" {
+    var state = State{};
+    state.V[0xC] = 5;
+    execute(0xFC29, &state);
+    try std.testing.expectEqual(state.V[0xC] * State.default_sprites_height, state.I);
 }
 
 // Fx33 - LD B, Vx
