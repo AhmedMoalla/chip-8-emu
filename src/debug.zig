@@ -1,35 +1,33 @@
 const std = @import("std");
-const State = @import("State.zig");
-const instr = @import("instructions.zig");
 
-pub fn print(state: State, what: struct { registers: bool = true, memory: bool = false }) void {
+const instr = @import("instructions.zig");
+const State = @import("State.zig");
+
+pub fn print(state: State, what: struct {
+    registers: bool = true,
+    memory: bool = false,
+    stack: bool = false,
+}) void {
     std.debug.print("==================================================================================\n", .{});
     if (what.registers) {
         std.debug.print("Registers\n", .{});
         std.debug.print("----------------------------------------------------------------------------------\n", .{});
         printRegisters(state);
-    }
-    if (what.registers and what.memory) {
         std.debug.print("----------------------------------------------------------------------------------\n", .{});
     }
+
     if (what.memory) {
         std.debug.print("Memory\n", .{});
         std.debug.print("----------------------------------------------------------------------------------\n", .{});
         printMemory(state);
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
     }
-    std.debug.print("==================================================================================\n", .{});
-}
 
-pub fn printROM(rom_path: []const u8) void {
-    std.debug.print("==================================================================================\n", .{});
-    std.debug.print("ROM\n", .{});
-    std.debug.print("----------------------------------------------------------------------------------\n", .{});
-    var state = State.init(rom_path) catch unreachable;
-    while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += State.instruction_size) {
-        const initial_pc = state.pc;
-        const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
-        instr.execute(instruction, &state);
-        state.pc = initial_pc;
+    if (what.stack) {
+        std.debug.print("Stack\n", .{});
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
+        printStack(state);
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
     }
     std.debug.print("==================================================================================\n", .{});
 }
@@ -114,6 +112,32 @@ fn printRegisters(state: State) void {
         std.debug.print("{X:0>2}  ", .{value});
     }
     std.debug.print("\n", .{});
+}
+
+fn printStack(state: State) void {
+    for (state.stack, 0..) |value, i| {
+        if (i == state.sp) {
+            std.debug.print(">", .{});
+        } else {
+            std.debug.print(" ", .{});
+        }
+        std.debug.print("{:2}: (0x{X:0>4})\n", .{ i, value });
+    }
+}
+
+pub fn printROM(rom_path: []const u8) void {
+    std.debug.print("==================================================================================\n", .{});
+    std.debug.print("ROM\n", .{});
+    std.debug.print("----------------------------------------------------------------------------------\n", .{});
+    var state = State.init(rom_path) catch unreachable;
+    state.sp = 10;
+    while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += State.instruction_size) {
+        const initial_pc = state.pc;
+        const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
+        instr.execute(instruction, &state);
+        state.pc = initial_pc;
+    }
+    std.debug.print("==================================================================================\n", .{});
 }
 
 pub fn printDisplay(display: []const u1) void {

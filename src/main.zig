@@ -3,11 +3,16 @@ const State = @import("State.zig");
 const instr = @import("instructions.zig");
 const debug = @import("debug.zig");
 
+pub const std_options: std.Options = .{
+    // Set the log level to info
+    .log_level = .info,
+};
+
 pub fn main() !void {
     const args = parseArgs();
 
     var state = try State.init(args.rom_path);
-    while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += State.instruction_size) {
+    while (state.pc < State.rom_loading_location + state.rom_size) {
         const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
         instr.execute(instruction, &state);
     }
