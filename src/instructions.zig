@@ -106,8 +106,16 @@ fn SYS(instruction: u16, _: *State) void {
 
 // 00E0 - CLS
 // Clear the display.
-fn CLS(instruction: u16, _: *State) void {
+fn CLS(instruction: u16, state: *State) void {
+    @memset(&state.display, 0);
     log.debug("{X:0>4} CLS", .{instruction});
+}
+
+test "CLS" {
+    var state = State{};
+    state.display[100] = 1;
+    execute(0x00E0, &state);
+    try std.testing.expectEqual(0, state.display[100]);
 }
 
 // 00EE - RET
@@ -148,9 +156,21 @@ test "JP" {
 // 2nnn - CALL addr
 // Call subroutine at nnn.
 // The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
-fn CALL(instruction: u16, _: *State) void {
+fn CALL(instruction: u16, state: *State) void {
     const nnn = pnnn(instruction);
+    state.sp += 1;
+    state.stack[state.sp] = state.pc;
+    state.pc = nnn;
     log.debug("{X:0>4} CALL NNN={X:0>3}", .{ instruction, nnn });
+}
+
+test "CALL" {
+    var state = State{};
+    state.pc = 0x234;
+    execute(0x2123, &state);
+    try std.testing.expectEqual(1, state.sp);
+    try std.testing.expectEqual(0x234, state.stack[state.sp]);
+    try std.testing.expectEqual(0x123, state.pc);
 }
 
 // 3xkk - SE Vx, byte
@@ -534,10 +554,96 @@ test "RND" {
 // it wraps around to the opposite side of the screen.
 // See instruction 8xy3 for more information on XOR, and section 2.4, Display,
 // for more information on the Chip-8 screen and sprites.
-fn DRW(instruction: u16, _: *State) void {
+fn DRW(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     const n = instruction & 0x000F;
+
+    const sprite_bytes = state.memory[state.I .. state.I + n];
+    const starting_x = @as(usize, state.V[instr.x]);
+    const starting_y = @as(usize, state.V[instr.y]);
+    const sprite_height = sprite_bytes.len;
+
+    state.V[0xF] = 0;
+
+    for (0..sprite_height) |sprite_y| {
+        const y = (starting_y + sprite_y) % State.display_height;
+        const sprite_byte = sprite_bytes[sprite_y];
+
+        for (0..8) |sprite_x| {
+            const x = (starting_x + sprite_x) % State.display_width;
+            const sprite_bit = (sprite_byte & (@as(u8, 0x80) >> @intCast(sprite_x))) != 0;
+            const display_idx = y * State.display_width + x;
+
+            const old_pixel = state.display[display_idx];
+            state.display[display_idx] ^= @intFromBool(sprite_bit);
+
+            if (old_pixel == 1 and state.display[display_idx] == 0) {
+                state.V[0xF] = 1;
+            }
+        }
+    }
     log.debug("{X:0>4} DRW X={X} Y={X} N={X}", .{ instruction, instr.x, instr.y, n });
+}
+
+test "DRW" {
+    var state = State{};
+    state.I = 0; // Location of the sprite of a "0"
+    const x: usize = 10;
+    var y: usize = 15;
+    const width = State.display_width;
+    state.V[0] = x;
+    state.V[1] = @intCast(y);
+    execute(0xD015, &state);
+
+    try std.testing.expectEqual(0, state.V[0xF]);
+
+    try std.testing.expectEqual(1, state.display[y * width + x]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 1]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 2]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
+
+    y += 1;
+    try std.testing.expectEqual(1, state.display[y * width + x]);
+    try std.testing.expectEqual(0, state.display[y * width + x + 1]);
+    try std.testing.expectEqual(0, state.display[y * width + x + 2]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
+
+    y += 1;
+    try std.testing.expectEqual(1, state.display[y * width + x]);
+    try std.testing.expectEqual(0, state.display[y * width + x + 1]);
+    try std.testing.expectEqual(0, state.display[y * width + x + 2]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
+
+    y += 1;
+    try std.testing.expectEqual(1, state.display[y * width + x]);
+    try std.testing.expectEqual(0, state.display[y * width + x + 1]);
+    try std.testing.expectEqual(0, state.display[y * width + x + 2]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
+
+    y += 1;
+    try std.testing.expectEqual(1, state.display[y * width + x]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 1]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 2]);
+    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
+}
+
+test "DRW collision" {
+    var state = State{};
+    state.I = 0; // Location of the sprite of a "0"
+    const x: usize = 10;
+    const y: usize = 15;
+    const width = State.display_width;
+    state.V[0] = x;
+    state.V[1] = @intCast(y);
+
+    // Draw sprite first time
+    execute(0xD015, &state);
+    try std.testing.expectEqual(0, state.V[0xF]); // No collision first time
+
+    // Draw same sprite in same location
+    execute(0xD015, &state);
+    try std.testing.expectEqual(1, state.V[0xF]); // Should detect collision
+    try std.testing.expectEqual(0, state.display[y * width + x]); // Pixels should be XORed to 0
 }
 
 // Ex9E - SKP Vx

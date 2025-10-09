@@ -1,0 +1,71 @@
+==================================================================================
+ROM
+----------------------------------------------------------------------------------
+debug: Read 132 bytes to memory location 0x200 from rom at 'roms/ibm-logo.ch8'
+debug(instr): 00E0 CLS
+debug(instr): A22A LDI NNN=22A
+debug(instr): 600C LD X=0 KK=0C
+debug(instr): 6108 LD X=1 KK=08
+debug(instr): D01F DRW X=0 Y=1 N=F
+debug(instr): 7009 ADD X=0 KK=09
+debug(instr): A239 LDI NNN=239
+debug(instr): D01F DRW X=0 Y=1 N=F
+debug(instr): A248 LDI NNN=248
+debug(instr): 7008 ADD X=0 KK=08
+debug(instr): D01F DRW X=0 Y=1 N=F
+debug(instr): 7004 ADD X=0 KK=04
+debug(instr): A257 LDI NNN=257
+debug(instr): D01F DRW X=0 Y=1 N=F
+debug(instr): 7008 ADD X=0 KK=08
+debug(instr): A266 LDI NNN=266
+debug(instr): D01F DRW X=0 Y=1 N=F
+debug(instr): 7008 ADD X=0 KK=08
+debug(instr): A275 LDI NNN=275
+debug(instr): D01F DRW X=0 Y=1 N=F
+debug(instr): 1228 JP NNN=228
+debug(instr): FF00 Unhandled
+debug(instr): FF00 Unhandled
+debug(instr): 3C00 SE X=C KK=00
+debug(instr): 3C00 SE X=C KK=00
+debug(instr): 3C00 SE X=C KK=00
+debug(instr): 3C00 SE X=C KK=00
+debug(instr): FF00 Unhandled
+debug(instr): FFFF Unhandled
+debug(instr): 00FF SYS NNN=0FF
+debug(instr): 0038 SYS NNN=038
+debug(instr): 003F SYS NNN=03F
+debug(instr): 003F SYS NNN=03F
+debug(instr): 0038 SYS NNN=038
+debug(instr): 00FF SYS NNN=0FF
+debug(instr): 00FF SYS NNN=0FF
+debug(instr): 8000 LDV X=0 Y=0
+debug(instr): E000 Unhandled
+debug(instr): E000 Unhandled
+debug(instr): 8000 LDV X=0 Y=0
+debug(instr): 8000 LDV X=0 Y=0
+debug(instr): E000 Unhandled
+debug(instr): E000 Unhandled
+debug(instr): 80F8 Unhandled
+debug(instr): 00FC SYS NNN=0FC
+debug(instr): 003E SYS NNN=03E
+debug(instr): 003F SYS NNN=03F
+debug(instr): 003B SYS NNN=03B
+debug(instr): 0039 SYS NNN=039
+debug(instr): 00F8 SYS NNN=0F8
+debug(instr): 00F8 SYS NNN=0F8
+debug(instr): 0300 SYS NNN=300
+debug(instr): 0700 SYS NNN=700
+debug(instr): 0F00 SYS NNN=F00
+debug(instr): BF00 JPV NNN=F00
+debug(instr): FB00 Unhandled
+debug(instr): F300 Unhandled
+debug(instr): E300 Unhandled
+debug(instr): 43E5 SNE X=3 KK=E5
+debug(instr): 05E2 SYS NNN=5E2
+debug(instr): 0085 SYS NNN=085
+debug(instr): 0781 SYS NNN=781
+debug(instr): 0180 SYS NNN=180
+debug(instr): 0280 SYS NNN=280
+debug(instr): 07E1 SYS NNN=7E1
+debug(instr): 06E7 SYS NNN=6E7
+==================================================================================

@@ -1,5 +1,6 @@
 const std = @import("std");
 const State = @import("State.zig");
+const instr = @import("instructions.zig");
 
 pub fn print(state: State, what: struct { registers: bool = true, memory: bool = false }) void {
     std.debug.print("==================================================================================\n", .{});
@@ -15,6 +16,20 @@ pub fn print(state: State, what: struct { registers: bool = true, memory: bool =
         std.debug.print("Memory\n", .{});
         std.debug.print("----------------------------------------------------------------------------------\n", .{});
         printMemory(state);
+    }
+    std.debug.print("==================================================================================\n", .{});
+}
+
+pub fn printROM(rom_path: []const u8) void {
+    std.debug.print("==================================================================================\n", .{});
+    std.debug.print("ROM\n", .{});
+    std.debug.print("----------------------------------------------------------------------------------\n", .{});
+    var state = State.init(rom_path) catch unreachable;
+    while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += State.instruction_size) {
+        const initial_pc = state.pc;
+        const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
+        instr.execute(instruction, &state);
+        state.pc = initial_pc;
     }
     std.debug.print("==================================================================================\n", .{});
 }
