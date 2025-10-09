@@ -115,3 +115,17 @@ fn printRegisters(state: State) void {
     }
     std.debug.print("\n", .{});
 }
+
+pub fn printDisplay(display: []const u1) void {
+    for (0..State.display_height) |y| {
+        for (0..State.display_width) |x| {
+            const bit = display[y * State.display_width + x];
+            if (bit == 1) {
+                std.debug.print("▓", .{});
+            } else {
+                std.debug.print("░", .{});
+            }
+        }
+        std.debug.print("\n", .{});
+    }
+}
