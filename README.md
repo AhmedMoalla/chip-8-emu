@@ -16,7 +16,7 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
 - [X] Corax+ Opcode Test
   
   ![](docs/3-corax+.png)
-- [ ] Flags Test
+- [X] Flags Test
   
   ![](docs/4-flags.png)
 - [ ] Quirks Test

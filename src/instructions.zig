@@ -394,9 +394,10 @@ test "ADDV" {
 fn SUB(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} SUB X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
-    state.V[0xF] = if (state.V[instr.x] > state.V[instr.y]) 1 else 0;
+    const borrow: u8 = if (state.V[instr.x] >= state.V[instr.y]) 1 else 0;
     state.V[instr.x] = @subWithOverflow(state.V[instr.x], state.V[instr.y]).@"0";
     state.pc += State.instruction_size;
+    state.V[0xF] = borrow;
 }
 
 test "SUB" {
@@ -422,9 +423,10 @@ test "SUB" {
 fn SHR(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} SHR X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
-    state.V[0xF] = state.V[instr.x] & 0x1;
+    const carry: u8 = state.V[instr.x] & 0x1;
     state.V[instr.x] >>= 1;
     state.pc += State.instruction_size;
+    state.V[0xF] = carry;
 }
 
 test "SHR" {
@@ -448,9 +450,10 @@ test "SHR" {
 fn SUBN(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} SUBN X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
-    state.V[0xF] = if (state.V[instr.y] > state.V[instr.x]) 1 else 0;
+    const borrow: u8 = if (state.V[instr.y] >= state.V[instr.x]) 1 else 0;
     state.V[instr.x] = @subWithOverflow(state.V[instr.y], state.V[instr.x]).@"0";
     state.pc += State.instruction_size;
+    state.V[0xF] = borrow;
 }
 
 test "SUBN" {
@@ -476,9 +479,10 @@ test "SUBN" {
 fn SHL(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} SHL X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
-    state.V[0xF] = (state.V[instr.x] >> 7) & 0x1;
+    const carry: u8 = (state.V[instr.x] >> 7) & 0x1;
     state.V[instr.x] <<= 1;
     state.pc += State.instruction_size;
+    state.V[0xF] = carry;
 }
 
 test "SHL" {
