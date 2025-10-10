@@ -1,8 +1,7 @@
 const std = @import("std");
 const State = @import("State.zig");
 const instr = @import("instructions.zig");
-const debug = @import("debug.zig");
-const rl = @import("raylib");
+const Frontend = @import("frontends.zig").Frontend;
 
 pub const std_options: std.Options = .{
     // Set the log level to info
@@ -10,77 +9,66 @@ pub const std_options: std.Options = .{
 };
 
 pub fn main() !void {
-    const args = parseArgs();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const args = try parseArgs(allocator);
 
     var state = try State.init(args.rom_path);
-    // while (state.pc < State.rom_loading_location + state.rom_size) {
-    //     const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
-    //     instr.execute(instruction, &state);
-    //     if (state.should_draw) {
-    //         std.debug.print("\x1B[2J\x1B[H", .{});
-    //         debug.printDisplay(&state.display);
-    //         // debug.print(state, .{ .registers = true, .memory = true, .stack = true });
-    //     }
-    // }
-    const scale = 8;
-    const screen_width = State.display_width * scale;
-    const screen_height = State.display_height * scale;
-
-    rl.initWindow(screen_width, screen_height, "Chip-8 Emulator");
-    defer rl.closeWindow();
-
-    rl.setTargetFPS(60);
-
-    var pixels: [State.display_width * State.display_height * 3]u8 = undefined;
-    const image = rl.Image{
-        .data = &pixels,
-        .width = State.display_width, // Changed from screen_width
-        .height = State.display_height, // Changed from screen_height
-        .mipmaps = 1,
-        .format = rl.PixelFormat.uncompressed_r8g8b8,
+    var front = switch (args.frontend) {
+        .raylib => try Frontend.init(.raylib, .{ .allocator = allocator }),
+        .console => try Frontend.init(.console, .{}),
     };
-    const texture = try rl.loadTextureFromImage(image);
-    defer rl.unloadTexture(texture);
+    defer front.deinit();
 
-    const zero = rl.Vector2.zero();
-
-    while (!rl.windowShouldClose()) {
+    while (!front.shouldStop()) {
         const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
         instr.execute(instruction, &state);
-
-        drw: {
-            if (!state.should_draw) break :drw;
-            rl.beginDrawing();
-            defer rl.endDrawing();
-
-            for (state.display, 0..) |pixel, i| {
-                const value: u8 = if (pixel == 1) 255 else 0;
-                pixels[i * 3 + 0] = value; // R
-                pixels[i * 3 + 1] = value; // G
-                pixels[i * 3 + 2] = value; // B
-            }
-
-            rl.updateTexture(texture, &pixels);
-            rl.clearBackground(rl.Color.black);
-            rl.drawTextureEx(texture, zero, 0, scale, rl.Color.white);
+        if (state.should_draw) {
+            // TODO: should_draw should also be false if previous display content = new display content.
+            // i.e.: if buffer didn't change don't bother with calling draw()
+            front.draw(state.display);
+            state.should_draw = false;
         }
     }
 }
 
 const Args = struct {
     rom_path: []const u8,
+    frontend: Frontend.Kind,
 };
 
-fn parseArgs() Args {
-    var args = std.process.args();
+fn parseArgs(allocator: std.mem.Allocator) !Args {
+    var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
     _ = args.skip(); // Program name
-    const rom_path = args.next();
-    if (rom_path == null) {
-        std.log.err("One argument is required which is the rom path", .{});
-        std.process.exit(1);
-    }
-    return Args{ .rom_path = rom_path.? };
+
+    return Args{
+        .rom_path = blk: {
+            const rom_path_arg = args.next();
+            if (rom_path_arg) |rom_path| {
+                break :blk rom_path;
+            } else {
+                std.log.err("One argument is required which is the rom path", .{});
+                std.process.exit(1);
+            }
+        },
+        .frontend = blk: {
+            const frontend_arg = args.next();
+            if (frontend_arg) |frontend| {
+                if (std.mem.eql(u8, frontend, "raylib")) {
+                    break :blk .raylib;
+                } else if (std.mem.eql(u8, frontend, "console")) {
+                    break :blk .console;
+                }
+                std.log.err("unrecognized frontend : '{s}'", .{frontend});
+                return error.UnrecognizedFrontend;
+            }
+
+            break :blk .console;
+        },
+    };
 }
 
 test {
