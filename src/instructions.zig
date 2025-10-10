@@ -133,12 +133,12 @@ fn RET(instruction: u16, state: *State) void {
 test "RET" {
     var state = State{ .sp = 2 };
     state.stack[0] = 0x1;
-    state.stack[1] = 0x2;
-    state.stack[2] = 0xBEEF;
+    state.stack[1] = 0xBEEF;
+    state.stack[2] = 0x2;
 
     execute(0x00EE, &state);
-    try std.testing.expectEqual(0xBEEF, state.pc);
     try std.testing.expectEqual(1, state.sp);
+    try std.testing.expectEqual(state.stack[1] + State.instruction_size, state.pc);
 }
 
 // 1nnn - JP addr
@@ -171,8 +171,8 @@ test "CALL" {
     var state = State{};
     state.pc = 0x234;
     execute(0x2123, &state);
+    try std.testing.expectEqual(0x234, state.stack[state.sp - 1]);
     try std.testing.expectEqual(1, state.sp);
-    try std.testing.expectEqual(0x234, state.stack[state.sp]);
     try std.testing.expectEqual(0x123, state.pc);
 }
 
@@ -693,12 +693,14 @@ test "SKP" {
     state.keys[5] = true;
     state.V[0xA] = 5;
     execute(0xEA9E, &state);
-    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+    var next_pc_value = initial_pc + (State.instruction_size * 2);
+    try std.testing.expectEqual(next_pc_value, state.pc);
 
     state.keys[5] = false;
     state.V[0xA] = 5;
     execute(0xEA9E, &state);
-    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+    next_pc_value += State.instruction_size;
+    try std.testing.expectEqual(next_pc_value, state.pc);
 }
 
 // ExA1 - SKNP Vx
@@ -721,12 +723,15 @@ test "SKNP" {
     state.keys[5] = false;
     state.V[0xA] = 5;
     execute(0xEAA1, &state);
-    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+    var next_pc_value = initial_pc + (State.instruction_size * 2);
+
+    try std.testing.expectEqual(next_pc_value, state.pc);
 
     state.keys[5] = true;
     state.V[0xA] = 5;
     execute(0xEAA1, &state);
-    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+    next_pc_value += State.instruction_size;
+    try std.testing.expectEqual(next_pc_value, state.pc);
 }
 
 // Fx07 - LD Vx, DT
@@ -767,7 +772,6 @@ fn runLDK(instruction: u16, state: *State) void {
 }
 
 test "LDK" {
-    std.testing.log_level = .debug;
     var state = State{};
 
     // 1. Start a thread that executes LDK => LDK should block the thread

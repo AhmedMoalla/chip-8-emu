@@ -99,7 +99,7 @@ fn loadROM(path: []const u8, memory: *[memory_size]u8) !usize {
 }
 
 test "loadROM" {
-    const rom_path = "roms/ibm-logo.ch8";
+    const rom_path = "roms/2-ibm-logo.ch8";
     const rom_file = try std.fs.cwd().openFile(rom_path, .{});
     var expected_memory = [_]u8{0} ** memory_size;
     _ = try rom_file.read(expected_memory[rom_loading_location..expected_memory.len]);
