@@ -13,7 +13,7 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
 - [X] IBM Logo
   
   ![](docs/2-ibm-logo.png)
-- [ ] Corax+ Opcode Test
+- [X] Corax+ Opcode Test
   
   ![](docs/3-corax+.png)
 - [ ] Flags Test

@@ -81,8 +81,8 @@ fn pxy0(instruction: u16) struct { x: usize, y: usize } {
 }
 
 // For instruction in format PX00 return X
-fn px00(instruction: u16) usize {
-    return (instruction & 0x0F00) >> 8;
+fn px00(instruction: u16) u4 {
+    return @intCast((instruction & 0x0F00) >> 8);
 }
 
 test "helper functions" {
@@ -888,22 +888,27 @@ test "LDB" {
 fn LDIVX(instruction: u16, state: *State) void {
     const x = px00(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} LDIVX X={X}", .{ state.pc, instruction, x });
-    for (0..x) |i| {
+    const count: usize = @intCast(x);
+    for (0..count + 1) |i| {
         state.memory[state.I + i] = state.V[i];
     }
+    const xu16: u16 = @intCast(x);
+    state.I += xu16 + 1;
     state.pc += State.instruction_size;
 }
 
 test "LDIVX" {
     var state = State{};
-    for (0..0xF) |i| {
+    const initial_I = state.I;
+    for (0..0xF + 1) |i| {
         state.V[i] = @intCast(i);
     }
     execute(0xFF55, &state);
-    for (0..0xF) |i| {
+    for (0..0xF + 1) |i| {
         const asu8: u8 = @intCast(i);
-        try std.testing.expectEqual(asu8, state.memory[state.I + i]);
+        try std.testing.expectEqual(asu8, state.memory[initial_I + i]);
     }
+    try std.testing.expectEqual(initial_I + 0xF + 1, state.I);
 }
 
 // Fx65 - LD Vx, [I]
@@ -912,20 +917,26 @@ test "LDIVX" {
 fn LDVXI(instruction: u16, state: *State) void {
     const x = px00(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} LDVXI X={X}", .{ state.pc, instruction, x });
-    for (0..x) |i| {
+
+    const count: usize = @intCast(x);
+    for (0..count + 1) |i| {
         state.V[i] = state.memory[state.I + i];
     }
+    const xu16: u16 = @intCast(x);
+    state.I += xu16 + 1;
     state.pc += State.instruction_size;
 }
 
 test "LDVXI" {
     var state = State{};
-    for (0..0xF) |i| {
+    const initial_I = state.I;
+    for (0..0xF + 1) |i| {
         state.memory[state.I + i] = @intCast(i);
     }
     execute(0xFF65, &state);
-    for (0..0xF) |i| {
+    for (0..0xF + 1) |i| {
         const asu8: u8 = @intCast(i);
         try std.testing.expectEqual(asu8, state.V[i]);
     }
+    try std.testing.expectEqual(initial_I + 0xF + 1, state.I);
 }
