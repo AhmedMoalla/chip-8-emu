@@ -46,6 +46,12 @@ pub const Frontend = union(enum) {
             .raylib => |*impl| impl.draw(display),
         }
     }
+
+    pub fn setKeys(self: @This(), keys: []bool) void {
+        return switch (self) {
+            inline else => |impl| impl.setKeys(keys),
+        };
+    }
 };
 
 const ConsoleFrontend = struct {
@@ -67,6 +73,8 @@ const ConsoleFrontend = struct {
             std.debug.print("\n", .{});
         }
     }
+
+    pub fn setKeys(_: @This(), _: []bool) void {}
 };
 
 const RaylibFrontend = struct {
@@ -128,5 +136,30 @@ const RaylibFrontend = struct {
         rl.updateTexture(self.texture, self.pixels.ptr);
         rl.clearBackground(rl.Color.black);
         rl.drawTextureEx(self.texture, zero, 0, self.scale, rl.Color.white);
+    }
+
+    const number_keys: [10]rl.KeyboardKey = .{ .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 };
+    const letter_keys: [5]rl.KeyboardKey = .{ .b, .c, .d, .e, .f };
+
+    pub fn setKeys(_: @This(), keys: []bool) void {
+        rl.pollInputEvents();
+
+        for (number_keys) |k| {
+            if (rl.isKeyDown(k)) {
+                const iusize: usize = @intCast(@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.kp_0));
+                keys[iusize] = true;
+            }
+        }
+
+        for (letter_keys) |k| {
+            if (rl.isKeyDown(k)) {
+                const iusize: usize = @intCast(0xA + (@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.a)));
+                keys[iusize] = true;
+            }
+        }
+
+        if (rl.isKeyDown(.q)) {
+            keys[0xA] = true;
+        }
     }
 };

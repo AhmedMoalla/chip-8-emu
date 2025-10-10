@@ -4,11 +4,18 @@ const instr = @import("instructions.zig");
 const State = @import("State.zig");
 
 pub fn print(state: State, what: struct {
-    registers: bool = true,
+    registers: bool = false,
     memory: bool = false,
     stack: bool = false,
+    keys: bool = false,
 }) void {
     std.debug.print("==================================================================================\n", .{});
+    if (what.keys) {
+        std.debug.print("Keys\n", .{});
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
+        printKeys(state);
+        std.debug.print("----------------------------------------------------------------------------------\n", .{});
+    }
     if (what.registers) {
         std.debug.print("Registers\n", .{});
         std.debug.print("----------------------------------------------------------------------------------\n", .{});
@@ -123,6 +130,17 @@ fn printStack(state: State) void {
         }
         std.debug.print("{:2}: (0x{X:0>4})\n", .{ i, value });
     }
+}
+
+fn printKeys(state: State) void {
+    for (0..state.V.len) |i| {
+        std.debug.print("K{X}  ", .{i});
+    }
+    std.debug.print("\n", .{});
+    for (state.keys) |value| {
+        std.debug.print("{X:0>2}  ", .{@intFromBool(value)});
+    }
+    std.debug.print("\n", .{});
 }
 
 pub fn printROM(rom_path: []const u8) void {

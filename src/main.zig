@@ -22,6 +22,7 @@ pub fn main() !void {
     defer front.deinit();
 
     while (!front.shouldStop()) {
+        front.setKeys(&state.keys);
         const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
         instr.execute(instruction, &state);
         if (state.should_draw) {
@@ -30,6 +31,13 @@ pub fn main() !void {
             front.draw(state.display);
             state.should_draw = false;
         }
+        for (state.keys) |k| {
+            if (k) {
+                @import("debug.zig").print(state, .{ .keys = true });
+                break;
+            }
+        }
+        @memset(&state.keys, false);
     }
 }
 
