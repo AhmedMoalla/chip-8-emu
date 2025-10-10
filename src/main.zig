@@ -4,7 +4,6 @@ const instr = @import("instructions.zig");
 const Frontend = @import("frontends.zig").Frontend;
 
 pub const std_options: std.Options = .{
-    // Set the log level to info
     .log_level = .info,
 };
 

@@ -8,12 +8,26 @@ For more informations about Chip-8:
 ## Test Suite Status
 This is the current status of every test case in [Timendus/chip8-test-suite](https://github.com/Timendus/chip8-test-suite):
 - [X] Chip-8 Logo
+
   ![](docs/1-chip-8-logo.png)
 - [X] IBM Logo
+  
   ![](docs/2-ibm-logo.png)
 - [ ] Corax+ Opcode Test
+  
+  ![](docs/3-corax+.png)
 - [ ] Flags Test
+  
+  ![](docs/4-flags.png)
 - [ ] Quirks Test
+  
+  ![](docs/5-quirks.png)
 - [ ] Keypad Test
+  
+  ![](docs/6-keypad.png)
 - [ ] Beep Test
+  
+  ![](docs/7-beep.png)
 - [ ] Scrolling Test
+  
+  ![](docs/8-scrolling.png)
