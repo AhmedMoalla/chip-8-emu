@@ -775,11 +775,22 @@ test "LDK" {
     execute(0xF50A, &state);
     execute(0xA123, &state); // LDI
 
-    // Nothing should have changed as execute becomes no-op when waiting for
+    // Nothing should have changed as execute becomes no-op when waiting for key to be pressed
     try std.testing.expectEqual(initial_pc, state.pc);
 
     // Press key 'A'
     state.keys[0xA] = true;
+
+    execute(0xA123, &state); // LDI
+    // Nothing should have changed as execute becomes no-op when waiting for key to be released
+    try std.testing.expectEqual(initial_pc, state.pc);
+
+    // Release key 'A'
+    state.keys[0xA] = false;
+
+    // Execution resumed and LDK should finish executing
+    execute(0xA123, &state); // LDI
+    try std.testing.expectEqual(initial_pc + State.instruction_size, state.pc);
 
     // Execution resumed and pc should advance
     execute(0xA123, &state); // LDI
@@ -826,8 +837,15 @@ test "LDK_waiting_for_key" {
     LDK(0xF50A, &state);
     try std.testing.expect(LDK_waiting_for_key(&state));
 
-    // After pressing a key we are no longer waiting and we finish executing LDK by storing the key in the register
+    // After pressing a key we are waiting for it to be released
     state.keys[0xA] = true;
+    try std.testing.expect(LDK_waiting_for_key(&state));
+
+    // Key is released we are still waiting for 1 more cycle
+    state.keys[0xA] = false;
+    try std.testing.expect(LDK_waiting_for_key(&state));
+
+    // We are no longer waiting and we should store key in register Vx
     try std.testing.expect(!LDK_waiting_for_key(&state));
     try std.testing.expectEqual(0xA, state.V[5]);
     try std.testing.expectEqual(null, state.register_waiting_for_key);

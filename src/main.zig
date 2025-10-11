@@ -1,6 +1,5 @@
 const std = @import("std");
 const State = @import("State.zig");
-const instr = @import("instructions.zig");
 const Frontend = @import("frontends.zig").Frontend;
 
 pub const std_options: std.Options = .{
@@ -23,8 +22,7 @@ pub fn main() !void {
 
     while (!front.shouldStop()) {
         front.setKeys(&state.keys);
-        const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
-        instr.execute(instruction, &state);
+        state.executeNextInstruction();
         if (state.should_draw) {
             // TODO: should_draw should also be false if previous display content = new display content.
             // i.e.: if buffer didn't change don't bother with calling draw()
@@ -73,5 +71,5 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
 }
 
 test {
-    _ = @import("instructions.zig");
+    _ = @import("interpreter.zig");
 }

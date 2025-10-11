@@ -1,4 +1,5 @@
 const std = @import("std");
+const interpreter = @import("interpreter.zig");
 
 const State = @This();
 
@@ -75,6 +76,11 @@ pub fn init(rom_path: []const u8) !State {
         else => return err,
     };
     return state;
+}
+
+pub fn executeNextInstruction(self: *State) void {
+    const instruction = (@as(u16, self.memory[self.pc]) << 8) | self.memory[self.pc + 1];
+    interpreter.execute(instruction, self);
 }
 
 fn loadROM(path: []const u8, memory: *[memory_size]u8) !usize {

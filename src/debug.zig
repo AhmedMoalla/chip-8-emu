@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const instr = @import("instructions.zig");
+const interpreter = @import("interpreter.zig");
 const State = @import("State.zig");
 
 pub fn print(state: State, what: struct {
@@ -152,7 +152,7 @@ pub fn printROM(rom_path: []const u8) void {
     while (state.pc < State.rom_loading_location + state.rom_size) : (state.pc += State.instruction_size) {
         const initial_pc = state.pc;
         const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
-        instr.execute(instruction, &state);
+        interpreter.execute(instruction, &state);
         state.pc = initial_pc;
     }
     std.debug.print("==================================================================================\n", .{});
