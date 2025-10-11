@@ -6,6 +6,10 @@ const InstructionFn = fn (instruction: u16, state: *State) void;
 const log = std.log.scoped(.instr);
 
 pub fn execute(instruction: u16, state: *State) void {
+    if (LDK_waiting_for_key(state)) {
+        return;
+    }
+
     const instruction_fn: *const InstructionFn = switch (instruction) {
         0xE0 => CLS,
         0xEE => RET,
@@ -761,36 +765,66 @@ test "LDVDT" {
 fn LDK(instruction: u16, state: *State) void {
     const x = px00(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} LDK X={X}", .{ state.pc, instruction, x });
-    state.key_pressed_mutex.lock();
-    defer state.key_pressed_mutex.unlock();
-    while (state.key_pressed == null) {
-        state.key_pressed_condition.wait(&state.key_pressed_mutex);
-    }
-    state.V[x] = state.key_pressed.?;
-    state.key_pressed = null;
-    state.pc += State.instruction_size;
-}
-
-fn runLDK(instruction: u16, state: *State) void {
-    LDK(instruction, state);
+    state.register_waiting_for_key = x;
 }
 
 test "LDK" {
     var state = State{};
+    const initial_pc = state.pc;
+    execute(0xF50A, &state);
+    execute(0xA123, &state); // LDI
 
-    // 1. Start a thread that executes LDK => LDK should block the thread
-    const handle = try std.Thread.spawn(.{}, runLDK, .{ 0xFB0A, &state });
+    // Nothing should have changed as execute becomes no-op when waiting for
+    try std.testing.expectEqual(initial_pc, state.pc);
 
-    // 2. Check that Vx is zero (unchanged)
-    try std.testing.expectEqual(0, state.V[0xB]);
+    // Press key 'A'
+    state.keys[0xA] = true;
 
-    // 3. Simulate key press which should unblock the thread
-    state.keyPress(0xA);
+    // Execution resumed and pc should advance
+    execute(0xA123, &state); // LDI
+    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
 
-    handle.join();
+    // Key is stored in register
+    try std.testing.expectEqual(0xA, state.V[5]);
+}
 
-    // 4. Check that Vx is set to the key that was pressed
-    try std.testing.expectEqual(0xA, state.V[0xB]);
+// Returns true if the interpreter is waiting for a key to be pressed
+fn LDK_waiting_for_key(state: *State) bool {
+    if (state.register_waiting_for_key) |register| {
+        const key_index: ?usize = for (state.keys, 0..) |key, i| {
+            if (key) {
+                break i;
+            }
+        } else null;
+
+        if (key_index) |i| {
+            state.V[register] = @intCast(i);
+            state.register_waiting_for_key = null;
+            state.pc += State.instruction_size;
+        } else {
+            return true;
+        }
+    }
+    return false;
+}
+
+test "LDK_waiting_for_key" {
+    var state = State{};
+
+    const initial_pc = state.pc;
+    // By default we are not waiting
+    try std.testing.expect(!LDK_waiting_for_key(&state));
+
+    // After calling LDK we are waiting
+    LDK(0xF50A, &state);
+    try std.testing.expect(LDK_waiting_for_key(&state));
+
+    // After pressing a key we are no longer waiting and we finish executing LDK by storing the key in the register
+    state.keys[0xA] = true;
+    try std.testing.expect(!LDK_waiting_for_key(&state));
+    try std.testing.expectEqual(0xA, state.V[5]);
+    try std.testing.expectEqual(null, state.register_waiting_for_key);
+    try std.testing.expectEqual(initial_pc + State.instruction_size, state.pc);
 }
 
 // Fx15 - LD DT, Vx

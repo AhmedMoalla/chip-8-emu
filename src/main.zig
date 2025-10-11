@@ -4,7 +4,7 @@ const instr = @import("instructions.zig");
 const Frontend = @import("frontends.zig").Frontend;
 
 pub const std_options: std.Options = .{
-    .log_level = .info,
+    .log_level = .debug,
 };
 
 pub fn main() !void {
@@ -30,12 +30,6 @@ pub fn main() !void {
             // i.e.: if buffer didn't change don't bother with calling draw()
             front.draw(state.display);
             state.should_draw = false;
-        }
-        for (state.keys) |k| {
-            if (k) {
-                @import("debug.zig").print(state, .{ .keys = true });
-                break;
-            }
         }
         @memset(&state.keys, false);
     }

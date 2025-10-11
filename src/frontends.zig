@@ -148,6 +148,7 @@ const RaylibFrontend = struct {
             if (rl.isKeyDown(k)) {
                 const iusize: usize = @intCast(@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.kp_0));
                 keys[iusize] = true;
+                return;
             }
         }
 
@@ -155,6 +156,7 @@ const RaylibFrontend = struct {
             if (rl.isKeyDown(k)) {
                 const iusize: usize = @intCast(0xA + (@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.a)));
                 keys[iusize] = true;
+                return;
             }
         }
 

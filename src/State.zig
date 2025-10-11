@@ -55,6 +55,7 @@ should_draw: bool = false,
 prng: std.Random = undefined,
 
 // Used by LDK instruction
+register_waiting_for_key: ?usize = null,
 key_pressed: ?u8 = null,
 key_pressed_mutex: std.Thread.Mutex = std.Thread.Mutex{},
 key_pressed_condition: std.Thread.Condition = std.Thread.Condition{},
