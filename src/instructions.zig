@@ -766,6 +766,7 @@ fn LDK(instruction: u16, state: *State) void {
     const x = px00(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} LDK X={X}", .{ state.pc, instruction, x });
     state.register_waiting_for_key = x;
+    state.key_pressed = null;
 }
 
 test "LDK" {
@@ -791,19 +792,25 @@ test "LDK" {
 // Returns true if the interpreter is waiting for a key to be pressed
 fn LDK_waiting_for_key(state: *State) bool {
     if (state.register_waiting_for_key) |register| {
-        const key_index: ?usize = for (state.keys, 0..) |key, i| {
-            if (key) {
-                break i;
+        if (state.key_pressed) |key| {
+            // A key is pressed but not yet released => Wait
+            if (!state.keys[key]) {
+                // A key that was pressed got released => :)
+                state.V[register] = key;
+                state.register_waiting_for_key = null;
+                state.key_pressed = null;
+                state.pc += State.instruction_size;
             }
-        } else null;
-
-        if (key_index) |i| {
-            state.V[register] = @intCast(i);
-            state.register_waiting_for_key = null;
-            state.pc += State.instruction_size;
-        } else {
             return true;
         }
+
+        for (state.keys, 0..) |key, i| {
+            if (key) {
+                state.key_pressed = @intCast(i);
+                return true;
+            }
+        }
+        return true;
     }
     return false;
 }

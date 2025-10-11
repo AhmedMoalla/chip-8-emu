@@ -57,8 +57,6 @@ prng: std.Random = undefined,
 // Used by LDK instruction
 register_waiting_for_key: ?usize = null,
 key_pressed: ?u8 = null,
-key_pressed_mutex: std.Thread.Mutex = std.Thread.Mutex{},
-key_pressed_condition: std.Thread.Condition = std.Thread.Condition{},
 
 pub fn init(rom_path: []const u8) !State {
     var state = State{
@@ -77,15 +75,6 @@ pub fn init(rom_path: []const u8) !State {
         else => return err,
     };
     return state;
-}
-
-pub fn keyPress(state: *State, key: u8) void {
-    {
-        state.key_pressed_mutex.lock();
-        defer state.key_pressed_mutex.unlock();
-        state.key_pressed = key;
-    }
-    state.key_pressed_condition.signal();
 }
 
 fn loadROM(path: []const u8, memory: *[memory_size]u8) !usize {
