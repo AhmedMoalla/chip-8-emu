@@ -47,9 +47,9 @@ pub const Frontend = union(enum) {
         }
     }
 
-    pub fn setKeys(self: @This(), keys: []bool) void {
+    pub fn notifyKeyPressed(self: @This(), state: *State, callback: fn (state: *State, key: u8) void) void {
         return switch (self) {
-            inline else => |impl| impl.setKeys(keys),
+            inline else => |impl| impl.notifyKeyPressed(state, callback),
         };
     }
 };
@@ -74,7 +74,7 @@ const ConsoleFrontend = struct {
         }
     }
 
-    pub fn setKeys(_: @This(), _: []bool) void {}
+    pub fn notifyKeyPressed(_: @This(), _: *State, _: fn (state: *State, key: u8) void) void {}
 };
 
 const RaylibFrontend = struct {
@@ -141,25 +141,28 @@ const RaylibFrontend = struct {
     const number_keys: [10]rl.KeyboardKey = .{ .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 };
     const letter_keys: [5]rl.KeyboardKey = .{ .b, .c, .d, .e, .f };
 
-    pub fn setKeys(_: @This(), keys: []bool) void {
+    pub fn notifyKeyPressed(_: @This(), state: *State, callback: fn (state: *State, key: u8) void) void {
         rl.pollInputEvents();
 
         for (number_keys) |k| {
             if (rl.isKeyDown(k)) {
-                const iusize: usize = @intCast(@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.kp_0));
-                keys[iusize] = true;
+                const iu8: u8 = @intCast(@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.kp_0));
+                callback(state, iu8);
+                return;
             }
         }
 
         for (letter_keys) |k| {
             if (rl.isKeyDown(k)) {
-                const iusize: usize = @intCast(0xA + (@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.a)));
-                keys[iusize] = true;
+                const iu8: u8 = @intCast(0xA + (@intFromEnum(k) - @intFromEnum(rl.KeyboardKey.a)));
+                callback(state, iu8);
+                return;
             }
         }
 
         if (rl.isKeyDown(.q)) {
-            keys[0xA] = true;
+            callback(state, 0xA);
+            return;
         }
     }
 };

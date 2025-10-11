@@ -21,10 +21,12 @@ pub fn main() !void {
     };
     defer front.deinit();
 
+    const thread = try std.Thread.spawn(.{}, runInterpreter, .{&state});
+    defer thread.join();
+
     while (!front.shouldStop()) {
-        front.setKeys(&state.keys);
-        const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
-        instr.execute(instruction, &state);
+        front.notifyKeyPressed(&state, State.onKeyPressed);
+
         if (state.should_draw) {
             // TODO: should_draw should also be false if previous display content = new display content.
             // i.e.: if buffer didn't change don't bother with calling draw()
@@ -38,6 +40,16 @@ pub fn main() !void {
             }
         }
         @memset(&state.keys, false);
+    }
+
+    state.is_running = false;
+}
+
+fn runInterpreter(state: *State) void {
+    while (state.is_running) {
+        const instruction = (@as(u16, state.memory[state.pc]) << 8) | state.memory[state.pc + 1];
+        instr.execute(instruction, state);
+        std.Thread.sleep(1 * std.time.ns_per_ms);
     }
 }
 

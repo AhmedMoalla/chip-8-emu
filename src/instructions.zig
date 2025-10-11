@@ -785,7 +785,7 @@ test "LDK" {
     try std.testing.expectEqual(0, state.V[0xB]);
 
     // 3. Simulate key press which should unblock the thread
-    state.keyPress(0xA);
+    state.onKeyPressed(0xA);
 
     handle.join();
 
