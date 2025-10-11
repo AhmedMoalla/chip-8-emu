@@ -3,7 +3,7 @@ const State = @import("State.zig");
 const Frontend = @import("frontends.zig").Frontend;
 
 pub const std_options: std.Options = .{
-    .log_level = .debug,
+    .log_level = .info,
 };
 
 pub fn main() !void {
