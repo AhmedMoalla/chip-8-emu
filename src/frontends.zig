@@ -2,13 +2,10 @@ const std = @import("std");
 const State = @import("State.zig");
 
 pub fn FrontendOptions(kind: Frontend.Kind) type {
+    const field_name = @tagName(kind);
+    const FieldType = @FieldType(Frontend, field_name);
     return switch (kind) {
-        .console => struct {},
-        .raylib => struct {
-            scale: f32 = 8,
-            target_fps: u32 = 60,
-            allocator: std.mem.Allocator,
-        },
+        inline else => if (@hasDecl(FieldType, "Options")) FieldType.Options else struct {},
     };
 }
 
@@ -19,10 +16,10 @@ pub const Frontend = union(enum) {
     pub const Kind = @typeInfo(Frontend).@"union".tag_type.?;
 
     pub fn init(comptime kind: Frontend.Kind, opts: FrontendOptions(kind)) !@This() {
-        return switch (kind) {
-            .console => .{ .console = ConsoleFrontend{} },
-            .raylib => .{ .raylib = try RaylibFrontend.init(opts) },
-        };
+        const field_name = @tagName(kind);
+        const FieldType = @FieldType(@This(), field_name);
+        const impl = if (@hasDecl(FieldType, "init")) try FieldType.init(opts) else FieldType{};
+        return @unionInit(@This(), field_name, impl);
     }
 
     pub fn deinit(self: @This()) void {
@@ -90,6 +87,12 @@ const ConsoleFrontend = struct {
 // - SetTargetFPS()
 // - GetFPS()
 const RaylibFrontend = struct {
+    const Options = struct {
+        scale: f32 = 8,
+        target_fps: u32 = 60,
+        allocator: std.mem.Allocator,
+    };
+
     const rl = @import("raylib");
 
     allocator: std.mem.Allocator,
