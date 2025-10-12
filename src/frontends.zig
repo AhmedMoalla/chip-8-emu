@@ -1,6 +1,9 @@
 const std = @import("std");
 const State = @import("State.zig");
 
+pub const beep_data = @embedFile("assets/beep.wav");
+pub const beep_data_extension = ".wav";
+
 pub fn FrontendOptions(kind: Frontend.Kind) type {
     const field_name = @tagName(kind);
     const FieldType = @FieldType(Frontend, field_name);
@@ -40,15 +43,23 @@ pub const Frontend = union(enum) {
 
     pub fn draw(self: *@This(), display: [State.display_resolution]u8) void {
         switch (self.*) {
-            .console => |*impl| impl.draw(display),
-            .raylib => |*impl| impl.draw(display),
+            inline else => |*impl| impl.draw(display),
         }
+    }
+
+    pub fn playSound(self: @This()) void {
+        return switch (self) {
+            inline else => |impl| {
+                if (@hasDecl(@TypeOf(impl), "playSound")) {
+                    impl.playSound();
+                }
+            },
+        };
     }
 
     pub fn setKeys(self: *@This(), keys: []bool) void {
         switch (self.*) {
-            .console => |*impl| impl.setKeys(keys),
-            .raylib => |*impl| impl.setKeys(keys),
+            inline else => |*impl| impl.setKeys(keys),
         }
     }
 };
@@ -98,7 +109,7 @@ const RaylibFrontend = struct {
     allocator: std.mem.Allocator,
     scale: f32,
     pixels: []u8,
-    texture: rl.Texture = undefined,
+    texture: rl.Texture,
 
     // Frame time control. We need to manage frame timing because we use SUPPORT_CUSTOM_FRAME_CONTROL
     previous_time: f64, // Previous time measure
@@ -109,34 +120,46 @@ const RaylibFrontend = struct {
 
     screenshot_counter: u8 = 0,
 
+    sound: rl.Sound,
+
     const zero = rl.Vector2{ .x = 0, .y = 0 };
 
     pub fn init(opts: FrontendOptions(.raylib)) !@This() {
-        var fe = RaylibFrontend{
-            .allocator = opts.allocator,
-            .scale = opts.scale,
-            .target_fps = @floatFromInt(opts.target_fps),
-            .pixels = try opts.allocator.alloc(u8, State.display_width * State.display_height * 3),
-            .previous_time = rl.getTime(),
-        };
-
         const screen_width = State.display_width * opts.scale;
         const screen_height = State.display_height * opts.scale;
         rl.initWindow(@intFromFloat(screen_width), @intFromFloat(screen_height), "Chip-8 Emulator");
+        const pixels = try opts.allocator.alloc(u8, State.display_width * State.display_height * 3);
 
-        const image = rl.Image{
-            .data = fe.pixels.ptr,
-            .width = State.display_width,
-            .height = State.display_height,
-            .mipmaps = 1,
-            .format = rl.PixelFormat.uncompressed_r8g8b8,
+        rl.initAudioDevice();
+
+        return RaylibFrontend{
+            .allocator = opts.allocator,
+            .scale = opts.scale,
+            .target_fps = @floatFromInt(opts.target_fps),
+
+            .pixels = pixels,
+            .texture = blk: {
+                const image = rl.Image{
+                    .data = pixels.ptr,
+                    .width = State.display_width,
+                    .height = State.display_height,
+                    .mipmaps = 1,
+                    .format = rl.PixelFormat.uncompressed_r8g8b8,
+                };
+                break :blk try rl.loadTextureFromImage(image);
+            },
+            .previous_time = rl.getTime(),
+            .sound = blk: {
+                const wave = try rl.loadWaveFromMemory(beep_data_extension, beep_data);
+                defer rl.unloadWave(wave);
+                break :blk rl.loadSoundFromWave(wave);
+            },
         };
-        fe.texture = try rl.loadTextureFromImage(image);
-
-        return fe;
     }
 
     pub fn deinit(self: @This()) void {
+        rl.unloadSound(self.sound);
+        rl.closeAudioDevice();
         rl.unloadTexture(self.texture);
         self.allocator.free(self.pixels);
         rl.closeWindow();
@@ -177,6 +200,10 @@ const RaylibFrontend = struct {
         }
 
         self.previous_time = self.current_time;
+    }
+
+    pub fn playSound(self: @This()) void {
+        rl.playSound(self.sound);
     }
 
     pub fn setKeys(self: *@This(), keys: []bool) void {

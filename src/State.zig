@@ -62,6 +62,8 @@ key_pressed: ?u8 = null,
 last_execution_time: i128 = 0,
 time_counter: i128 = 0,
 
+rom_size: usize = undefined,
+
 pub fn init(rom_path: []const u8) !State {
     var state = State{
         .prng = rnd: {
@@ -71,7 +73,7 @@ pub fn init(rom_path: []const u8) !State {
             break :rnd prng.random();
         },
     };
-    _ = loadROM(rom_path, &state.memory) catch |err| switch (err) {
+    state.rom_size = loadROM(rom_path, &state.memory) catch |err| switch (err) {
         error.FileNotFound => {
             std.log.err("Rom at '{s}' was not found", .{rom_path});
             std.process.exit(1);

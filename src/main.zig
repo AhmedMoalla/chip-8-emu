@@ -29,6 +29,10 @@ pub fn main() !void {
             front.draw(state.display);
             state.should_draw = false;
         }
+
+        if (state.sound_timer > 0) {
+            front.playSound();
+        }
     }
 }
 
