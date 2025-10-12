@@ -29,7 +29,6 @@ pub fn main() !void {
             front.draw(state.display);
             state.should_draw = false;
         }
-        @memset(&state.keys, false);
     }
 }
 

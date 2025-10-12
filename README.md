@@ -21,13 +21,13 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
   ![](docs/4-flags.png)
 - [ ] Quirks Test
   
-  ![](docs/5-quirks.png)
-- [ ] Keypad Test
+  ![](docs/5-quirks.gif)
+- [X] Keypad Test
   
-  ![](docs/6-keypad.png)
-- [ ] Beep Test
+  ![](docs/6-keypad.gif)
+- [ ] Beep Test (No sound)
   
-  ![](docs/7-beep.png)
+  ![](docs/7-beep.gif)
 - [ ] Scrolling Test
   
-  ![](docs/8-scrolling.png)
+  ![](docs/8-scrolling.gif)

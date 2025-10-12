@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     const raylib = raylib_dep.module("raylib"); // main raylib module
     const raygui = raylib_dep.module("raygui"); // raygui module
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
+    raylib_artifact.root_module.addCMacro("SUPPORT_CUSTOM_FRAME_CONTROL", "");
 
     const exe = b.addExecutable(.{
         .name = "chip_8_emu",

@@ -85,8 +85,8 @@ pub fn executeNextInstruction(self: *State) void {
     const time_elapsed_since_last_execution = std.time.nanoTimestamp() - self.last_execution_time;
     self.time_counter += time_elapsed_since_last_execution;
     if (self.time_counter >= @"60hz") {
-        self.delay_timer = @max(0, @subWithOverflow(self.delay_timer, 1).@"0");
-        self.sound_timer = @max(0, @subWithOverflow(self.sound_timer, 1).@"0");
+        if (self.delay_timer > 0) self.delay_timer -= 1;
+        if (self.sound_timer > 0) self.sound_timer -= 1;
         self.time_counter = 0;
     }
 
