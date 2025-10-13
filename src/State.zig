@@ -32,8 +32,6 @@ const default_sprites = [_]u8{
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 };
 
-const @"60hz" = std.time.ns_per_s / 60;
-
 // Available to instructions
 memory: [memory_size]u8 = default_sprites ++ ([_]u8{0} ** (memory_size - default_sprites.len)),
 V: [16]u8 = [_]u8{0} ** 16, // V0..VF
@@ -58,13 +56,10 @@ prng: std.Random = undefined,
 register_waiting_for_key: ?usize = null,
 key_pressed: ?u8 = null,
 
-// Used to decrement the timers
-last_execution_time: i128 = 0,
-time_counter: i128 = 0,
-
 rom_size: usize = undefined,
+tick_rate: u32 = undefined,
 
-pub fn init(rom_path: []const u8) !State {
+pub fn init(rom_path: []const u8, tick_rate: u32) !State {
     var state = State{
         .prng = rnd: {
             var seed: u64 = undefined;
@@ -72,6 +67,7 @@ pub fn init(rom_path: []const u8) !State {
             var prng = std.Random.DefaultPrng.init(seed);
             break :rnd prng.random();
         },
+        .tick_rate = tick_rate,
     };
     state.rom_size = loadROM(rom_path, &state.memory) catch |err| switch (err) {
         error.FileNotFound => {
@@ -84,17 +80,13 @@ pub fn init(rom_path: []const u8) !State {
 }
 
 pub fn executeNextInstruction(self: *State) void {
-    const time_elapsed_since_last_execution = std.time.nanoTimestamp() - self.last_execution_time;
-    self.time_counter += time_elapsed_since_last_execution;
-    if (self.time_counter >= @"60hz") {
-        if (self.delay_timer > 0) self.delay_timer -= 1;
-        if (self.sound_timer > 0) self.sound_timer -= 1;
-        self.time_counter = 0;
+    for (0..self.tick_rate) |_| {
+        const instruction = (@as(u16, self.memory[self.pc]) << 8) | self.memory[self.pc + 1];
+        interpreter.execute(instruction, self);
     }
 
-    const instruction = (@as(u16, self.memory[self.pc]) << 8) | self.memory[self.pc + 1];
-    interpreter.execute(instruction, self);
-    self.last_execution_time = std.time.nanoTimestamp();
+    if (self.delay_timer > 0) self.delay_timer -= 1;
+    if (self.sound_timer > 0) self.sound_timer -= 1;
 }
 
 fn loadROM(path: []const u8, memory: *[memory_size]u8) !usize {

@@ -13,7 +13,7 @@ pub fn main() !void {
 
     const args = try parseArgs(allocator);
 
-    var state = try State.init(args.rom_path);
+    var state = try State.init(args.rom_path, args.tick_rate);
     var front = switch (args.frontend) {
         .raylib => try Frontend.init(.raylib, .{ .allocator = allocator }),
         .console => try Frontend.init(.console, .{}),
@@ -23,13 +23,8 @@ pub fn main() !void {
     while (!front.shouldStop()) {
         front.setKeys(&state.keys);
         state.executeNextInstruction();
-        if (state.should_draw) {
-            // TODO: should_draw should also be false if previous display content = new display content.
-            // i.e.: if buffer didn't change don't bother with calling draw()
-            front.draw(state.display);
-            state.should_draw = false;
-        }
-
+        front.draw(state.should_draw, state.display);
+        state.should_draw = false;
         if (state.sound_timer > 0) {
             front.playSound();
         }
@@ -38,6 +33,7 @@ pub fn main() !void {
 
 const Args = struct {
     rom_path: []const u8,
+    tick_rate: u32 = 20,
     frontend: Frontend.Kind,
 };
 
@@ -68,7 +64,7 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
                 return error.UnrecognizedFrontend;
             }
 
-            break :blk .console;
+            break :blk .raylib;
         },
     };
 }

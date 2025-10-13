@@ -41,9 +41,9 @@ pub const Frontend = union(enum) {
         };
     }
 
-    pub fn draw(self: *@This(), display: [State.display_resolution]u8) void {
+    pub fn draw(self: *@This(), should_draw: bool, display: [State.display_resolution]u8) void {
         switch (self.*) {
-            inline else => |*impl| impl.draw(display),
+            inline else => |*impl| impl.draw(should_draw, display),
         }
     }
 
@@ -69,7 +69,8 @@ const ConsoleFrontend = struct {
         return false;
     }
 
-    pub fn draw(_: *@This(), display: [State.display_resolution]u8) void {
+    pub fn draw(_: *@This(), should_draw: bool, display: [State.display_resolution]u8) void {
+        if (!should_draw) return;
         std.debug.print("\x1B[2J\x1B[H", .{});
         for (0..State.display_height) |y| {
             for (0..State.display_width) |x| {
@@ -169,12 +170,17 @@ const RaylibFrontend = struct {
         return rl.windowShouldClose();
     }
 
-    pub fn draw(self: *@This(), display: [State.display_resolution]u8) void {
+    pub fn draw(self: *@This(), should_draw: bool, display: [State.display_resolution]u8) void {
+        if (!should_draw) {
+            self.waitForTargetFPS();
+            return;
+        }
+
         rl.beginDrawing();
         defer {
             rl.endDrawing();
             rl.swapScreenBuffer();
-            self.keepTargetFPS();
+            self.waitForTargetFPS();
         }
 
         for (display, 0..) |pixel, i| {
@@ -189,7 +195,8 @@ const RaylibFrontend = struct {
         rl.drawTextureEx(self.texture, zero, 0, self.scale, rl.Color.white);
     }
 
-    fn keepTargetFPS(self: *@This()) void {
+    // TODO: Refactor with std.time.Timer
+    fn waitForTargetFPS(self: *@This()) void {
         self.current_time = rl.getTime();
         self.update_draw_time = self.current_time - self.previous_time;
 

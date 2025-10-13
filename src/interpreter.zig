@@ -858,7 +858,7 @@ test "LDK_waiting_for_key" {
 fn LDDTV(instruction: u16, state: *State) void {
     const x = px00(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} LDDTV X={X}", .{ state.pc, instruction, x });
-    state.delay_timer = state.V[0xB];
+    state.delay_timer = state.V[x];
     state.pc += State.instruction_size;
 }
 
@@ -867,6 +867,10 @@ test "LDDTV" {
     state.V[0xB] = 0x13;
     execute(0xFB15, &state);
     try std.testing.expectEqual(state.V[0xB], state.delay_timer);
+
+    state.V[0xA] = 0x15;
+    execute(0xFA15, &state);
+    try std.testing.expectEqual(state.V[0xA], state.delay_timer);
 }
 
 // Fx18 - LD ST, Vx
@@ -875,7 +879,7 @@ test "LDDTV" {
 fn LDST(instruction: u16, state: *State) void {
     const x = px00(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} LDST X={X}", .{ state.pc, instruction, x });
-    state.sound_timer = state.V[0xB];
+    state.sound_timer = state.V[x];
     state.pc += State.instruction_size;
 }
 
@@ -884,6 +888,10 @@ test "LDST" {
     state.V[0xB] = 0x13;
     execute(0xFB18, &state);
     try std.testing.expectEqual(state.V[0xB], state.sound_timer);
+
+    state.V[0xA] = 0x20;
+    execute(0xFA18, &state);
+    try std.testing.expectEqual(state.V[0xA], state.sound_timer);
 }
 
 // Fx1E - ADD I, Vx

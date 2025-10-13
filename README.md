@@ -25,7 +25,7 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
 - [X] Keypad Test
   
   ![](docs/6-keypad.gif)
-- [ ] Beep Test (No sound)
+- [X] Beep Test (Sound emitted according to test specification)
   
   ![](docs/7-beep.gif)
 - [ ] Scrolling Test
