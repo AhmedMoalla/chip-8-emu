@@ -310,6 +310,7 @@ fn OR(instruction: u16, state: *State) void {
     log.debug("[0x{X:0>4}] {X:0>4} OR X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
     state.V[instr.x] |= state.V[instr.y];
     state.pc += State.instruction_size;
+    state.V[0xF] = 0;
 }
 
 test "OR" {
@@ -317,8 +318,10 @@ test "OR" {
     const initial_value = 5;
     state.V[0xA] = initial_value;
     state.V[0xD] = 9;
+    state.V[0xF] = 4;
     execute(0x8AD1, &state);
     try std.testing.expectEqual(initial_value | state.V[0xD], state.V[0xA]);
+    try std.testing.expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
 }
 
 // 8xy2 - AND Vx, Vy
@@ -331,6 +334,7 @@ fn AND(instruction: u16, state: *State) void {
     log.debug("[0x{X:0>4}] {X:0>4} AND X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
     state.V[instr.x] &= state.V[instr.y];
     state.pc += State.instruction_size;
+    state.V[0xF] = 0;
 }
 
 test "AND" {
@@ -338,8 +342,10 @@ test "AND" {
     const initial_value = 5;
     state.V[0xA] = initial_value;
     state.V[0xD] = 9;
+    state.V[0xF] = 4;
     execute(0x8AD2, &state);
     try std.testing.expectEqual(initial_value & state.V[0xD], state.V[0xA]);
+    try std.testing.expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
 }
 
 // 8xy3 - XOR Vx, Vy
@@ -352,6 +358,7 @@ fn XOR(instruction: u16, state: *State) void {
     log.debug("[0x{X:0>4}] {X:0>4} XOR X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
     state.V[instr.x] ^= state.V[instr.y];
     state.pc += State.instruction_size;
+    state.V[0xF] = 0;
 }
 
 test "XOR" {
@@ -359,8 +366,10 @@ test "XOR" {
     const initial_value = 5;
     state.V[0xA] = initial_value;
     state.V[0xD] = 9;
+    state.V[0xF] = 4;
     execute(0x8AD3, &state);
     try std.testing.expectEqual(initial_value ^ state.V[0xD], state.V[0xA]);
+    try std.testing.expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
 }
 
 // 8xy4 - ADD Vx, Vy
