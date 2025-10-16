@@ -5,7 +5,10 @@ const Frontend = f.Frontend;
 const Args = @import("Args.zig");
 
 pub const std_options: std.Options = .{
-    .log_level = .info,
+    .log_level = .debug,
+    .log_scope_levels = &[_]std.log.ScopeLevel{
+        .{ .scope = .instr, .level = .info },
+    },
 };
 
 pub fn main() !void {

@@ -21,7 +21,22 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
   ![](docs/4-flags.png)
 - [ ] Quirks Test
   
-  ![](docs/5-quirks.gif)
+  - [X] Chip-8
+  
+    ![](docs/5-quirks-chip-8.png)
+
+  - [ ] Super-Chip (Modern)
+  
+    ![](docs/5-quirks-super-chip-modern.png)
+
+  - [ ] Super-Chip (Legacy)
+  
+    ![](docs/5-quirks-super-chip-legacy.png)
+
+  - [ ] XO-Chip
+  
+    ![](docs/5-quirks-xo-chip.png)
+  
 - [X] Keypad Test
   
   ![](docs/6-keypad.gif)

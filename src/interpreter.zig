@@ -5,6 +5,9 @@ const InstructionFn = fn (instruction: u16, state: *State) void;
 
 const log = std.log.scoped(.instr);
 
+const expect = std.testing.expect;
+const expectEqual = std.testing.expectEqual;
+
 pub fn execute(instruction: u16, state: *State) void {
     if (LDK_waiting_for_key(state)) {
         return;
@@ -90,14 +93,14 @@ fn px00(instruction: u16) u4 {
 }
 
 test "helper functions" {
-    try std.testing.expectEqual(0x123, pnnn(0xA123));
+    try expectEqual(0x123, pnnn(0xA123));
     const result1 = pxkk(0xA123);
-    try std.testing.expectEqual(1, result1.x);
-    try std.testing.expectEqual(0x23, result1.kk);
+    try expectEqual(1, result1.x);
+    try expectEqual(0x23, result1.kk);
     const result2 = pxy0(0xA123);
-    try std.testing.expectEqual(1, result2.x);
-    try std.testing.expectEqual(2, result2.y);
-    try std.testing.expectEqual(1, px00(0xA123));
+    try expectEqual(1, result2.x);
+    try expectEqual(2, result2.y);
+    try expectEqual(1, px00(0xA123));
 }
 
 // 0nnn - SYS addr
@@ -121,7 +124,7 @@ test "CLS" {
     var state = State{};
     state.display[100] = 1;
     execute(0x00E0, &state);
-    try std.testing.expectEqual(0, state.display[100]);
+    try expectEqual(0, state.display[100]);
 }
 
 // 00EE - RET
@@ -141,8 +144,8 @@ test "RET" {
     state.stack[2] = 0x2;
 
     execute(0x00EE, &state);
-    try std.testing.expectEqual(1, state.sp);
-    try std.testing.expectEqual(state.stack[1] + State.instruction_size, state.pc);
+    try expectEqual(1, state.sp);
+    try expectEqual(state.stack[1] + State.instruction_size, state.pc);
 }
 
 // 1nnn - JP addr
@@ -157,7 +160,7 @@ fn JP(instruction: u16, state: *State) void {
 test "JP" {
     var state = State{};
     execute(0x1005, &state);
-    try std.testing.expectEqual(5, state.pc);
+    try expectEqual(5, state.pc);
 }
 
 // 2nnn - CALL addr
@@ -175,9 +178,9 @@ test "CALL" {
     var state = State{};
     state.pc = 0x234;
     execute(0x2123, &state);
-    try std.testing.expectEqual(0x234, state.stack[state.sp - 1]);
-    try std.testing.expectEqual(1, state.sp);
-    try std.testing.expectEqual(0x123, state.pc);
+    try expectEqual(0x234, state.stack[state.sp - 1]);
+    try expectEqual(1, state.sp);
+    try expectEqual(0x123, state.pc);
 }
 
 // 3xkk - SE Vx, byte
@@ -198,7 +201,7 @@ test "SE" {
     const initial_pc = state.pc;
     state.V[1] = 0x23;
     execute(0x3123, &state);
-    try std.testing.expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
+    try expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
 }
 
 // 4xkk - SNE Vx, byte
@@ -219,7 +222,7 @@ test "SNE" {
     const initial_pc = state.pc;
     state.V[1] = 0x24;
     execute(0x4123, &state);
-    try std.testing.expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
+    try expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
 }
 
 // 5xy0 - SE Vx, Vy
@@ -241,7 +244,7 @@ test "SEV" {
     state.V[1] = 0x24;
     state.V[2] = state.V[1];
     execute(0x5120, &state);
-    try std.testing.expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
+    try expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
 }
 
 // 6xkk - LD Vx, byte
@@ -257,7 +260,7 @@ fn LD(instruction: u16, state: *State) void {
 test "LD" {
     var state = State{};
     execute(0x6123, &state);
-    try std.testing.expectEqual(0x23, state.V[1]);
+    try expectEqual(0x23, state.V[1]);
 }
 
 // 7xkk - ADD Vx, byte
@@ -275,12 +278,12 @@ test "ADD" {
     const initial_value = 5;
     state.V[1] = initial_value;
     execute(0x7123, &state);
-    try std.testing.expectEqual(initial_value + 0x23, state.V[1]);
+    try expectEqual(initial_value + 0x23, state.V[1]);
 
     // Overflow should wrap
     state.V[1] = 255;
     execute(0x7102, &state);
-    try std.testing.expectEqual(1, state.V[1]);
+    try expectEqual(1, state.V[1]);
 }
 
 // 8xy0 - LD Vx, Vy
@@ -297,7 +300,7 @@ test "LDV" {
     var state = State{};
     state.V[2] = 10;
     execute(0x8120, &state);
-    try std.testing.expectEqual(state.V[2], state.V[1]);
+    try expectEqual(state.V[2], state.V[1]);
 }
 
 // 8xy1 - OR Vx, Vy
@@ -320,8 +323,8 @@ test "OR" {
     state.V[0xD] = 9;
     state.V[0xF] = 4;
     execute(0x8AD1, &state);
-    try std.testing.expectEqual(initial_value | state.V[0xD], state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
+    try expectEqual(initial_value | state.V[0xD], state.V[0xA]);
+    try expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
 }
 
 // 8xy2 - AND Vx, Vy
@@ -344,8 +347,8 @@ test "AND" {
     state.V[0xD] = 9;
     state.V[0xF] = 4;
     execute(0x8AD2, &state);
-    try std.testing.expectEqual(initial_value & state.V[0xD], state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
+    try expectEqual(initial_value & state.V[0xD], state.V[0xA]);
+    try expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
 }
 
 // 8xy3 - XOR Vx, Vy
@@ -368,8 +371,8 @@ test "XOR" {
     state.V[0xD] = 9;
     state.V[0xF] = 4;
     execute(0x8AD3, &state);
-    try std.testing.expectEqual(initial_value ^ state.V[0xD], state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
+    try expectEqual(initial_value ^ state.V[0xD], state.V[0xA]);
+    try expectEqual(0, state.V[0xF]); // https://chip8.gulrak.net/#quirk5
 }
 
 // 8xy4 - ADD Vx, Vy
@@ -391,14 +394,14 @@ test "ADDV" {
     state.V[0xA] = 255;
     state.V[0xD] = 1;
     execute(0x8AD4, &state);
-    try std.testing.expectEqual(0, state.V[0xA]);
-    try std.testing.expectEqual(1, state.V[0xF]);
+    try expectEqual(0, state.V[0xA]);
+    try expectEqual(1, state.V[0xF]);
 
     state.V[0xA] = 100;
     state.V[0xD] = 1;
     execute(0x8AD4, &state);
-    try std.testing.expectEqual(101, state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]);
+    try expectEqual(101, state.V[0xA]);
+    try expectEqual(0, state.V[0xF]);
 }
 
 // 8xy5 - SUB Vx, Vy
@@ -418,14 +421,14 @@ test "SUB" {
     state.V[0xA] = 100;
     state.V[0xD] = 1;
     execute(0x8AD5, &state);
-    try std.testing.expectEqual(99, state.V[0xA]);
-    try std.testing.expectEqual(1, state.V[0xF]);
+    try expectEqual(99, state.V[0xA]);
+    try expectEqual(1, state.V[0xF]);
 
     state.V[0xA] = 20;
     state.V[0xD] = 80;
     execute(0x8AD5, &state);
-    try std.testing.expectEqual(196, state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]);
+    try expectEqual(196, state.V[0xA]);
+    try expectEqual(0, state.V[0xF]);
 }
 
 // 8xy6 - SHR Vx {, Vy}
@@ -447,14 +450,14 @@ test "SHR" {
     state.V[0xA] = 241;
     state.V[0xD] = 123;
     execute(0x8AD6, &state);
-    try std.testing.expectEqual(state.V[0xD] >> 1, state.V[0xA]);
-    try std.testing.expectEqual(1, state.V[0xF]);
+    try expectEqual(state.V[0xD] >> 1, state.V[0xA]);
+    try expectEqual(1, state.V[0xF]);
 
     state.V[0xA] = 240;
     state.V[0xD] = 0xF;
     execute(0x8AD6, &state);
-    try std.testing.expectEqual(state.V[0xD] >> 1, state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]);
+    try expectEqual(state.V[0xD] >> 1, state.V[0xA]);
+    try expectEqual(0, state.V[0xF]);
 }
 
 // 8xy7 - SUBN Vx, Vy
@@ -474,14 +477,14 @@ test "SUBN" {
     state.V[0xA] = 1;
     state.V[0xD] = 100;
     execute(0x8AD7, &state);
-    try std.testing.expectEqual(99, state.V[0xA]);
-    try std.testing.expectEqual(1, state.V[0xF]);
+    try expectEqual(99, state.V[0xA]);
+    try expectEqual(1, state.V[0xF]);
 
     state.V[0xA] = 80;
     state.V[0xD] = 20;
     execute(0x8AD7, &state);
-    try std.testing.expectEqual(196, state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]);
+    try expectEqual(196, state.V[0xA]);
+    try expectEqual(0, state.V[0xF]);
 }
 
 // 8xyE - SHL Vx {, Vy}
@@ -503,14 +506,14 @@ test "SHL" {
     state.V[0xA] = 240;
     state.V[0xD] = 123;
     execute(0x8ADE, &state);
-    try std.testing.expectEqual(state.V[0xD] << 1, state.V[0xA]);
-    try std.testing.expectEqual(1, state.V[0xF]);
+    try expectEqual(state.V[0xD] << 1, state.V[0xA]);
+    try expectEqual(1, state.V[0xF]);
 
     state.V[0xA] = 1;
     state.V[0xD] = 123;
     execute(0x8ADE, &state);
-    try std.testing.expectEqual(state.V[0xD] << 1, state.V[0xA]);
-    try std.testing.expectEqual(0, state.V[0xF]);
+    try expectEqual(state.V[0xD] << 1, state.V[0xA]);
+    try expectEqual(0, state.V[0xF]);
 }
 
 // 9xy0 - SNE Vx, Vy
@@ -532,7 +535,7 @@ test "SNEV" {
     state.V[0xA] = 0x24;
     state.V[0xB] = 0x25;
     execute(0x9AB0, &state);
-    try std.testing.expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
+    try expectEqual(initial_pc + (2 * State.instruction_size), state.pc);
 }
 
 // Annn - LD I, addr
@@ -548,7 +551,7 @@ fn LDI(instruction: u16, state: *State) void {
 test "LDI" {
     var state = State{};
     execute(0xA123, &state);
-    try std.testing.expectEqual(0x123, state.I);
+    try expectEqual(0x123, state.I);
 }
 
 // Bnnn - JP V0, addr
@@ -564,7 +567,7 @@ test "JPV" {
     var state = State{};
     state.V[0] = 5;
     execute(0xB023, &state);
-    try std.testing.expectEqual(@as(u16, 0x23) + state.V[0], state.pc);
+    try expectEqual(@as(u16, 0x23) + state.V[0], state.pc);
 }
 
 // Cxkk - RND Vx, byte
@@ -588,7 +591,7 @@ test "RND" {
     };
     execute(0xCA12, &state);
     const seed_first_random_value: u8 = 169;
-    try std.testing.expectEqual(seed_first_random_value & 0x12, state.V[0xA]);
+    try expectEqual(seed_first_random_value & 0x12, state.V[0xA]);
 }
 
 // Dxyn - DRW Vx, Vy, nibble
@@ -603,97 +606,134 @@ test "RND" {
 // for more information on the Chip-8 screen and sprites.
 fn DRW(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
-    const n = instruction & 0x000F;
+    const n = @as(usize, instruction & 0x000F);
     log.debug("[0x{X:0>4}] {X:0>4} DRW X={X} Y={X} N={X}", .{ state.pc, instruction, instr.x, instr.y, n });
 
     const sprite_bytes = state.memory[state.I .. state.I + n];
-    const starting_x = @as(usize, state.V[instr.x]);
-    const starting_y = @as(usize, state.V[instr.y]);
-    const sprite_height = sprite_bytes.len;
+
+    const start_x = @as(usize, state.V[instr.x]) % State.display_width;
+    const start_y = @as(usize, state.V[instr.y]) % State.display_height;
 
     state.V[0xF] = 0;
 
-    for (0..sprite_height) |sprite_y| {
-        const y = (starting_y + sprite_y) % State.display_height;
-        const sprite_byte = sprite_bytes[sprite_y];
+    for (sprite_bytes, 0..) |sprite_byte, row| {
+        const y = start_y + row;
+        if (y >= State.display_height)
+            break; // sprite rows beyond screen bottom are clipped
 
-        for (0..8) |sprite_x| {
-            const x = (starting_x + sprite_x) % State.display_width;
-            const sprite_bit = (sprite_byte & (@as(u8, 0x80) >> @intCast(sprite_x))) != 0;
-            const display_idx = y * State.display_width + x;
+        for (0..8) |bit_idx| {
+            const x = start_x + bit_idx;
+            if (x >= State.display_width)
+                break; // pixels beyond right edge are clipped
 
-            const old_pixel = state.display[display_idx];
-            state.display[display_idx] ^= @intFromBool(sprite_bit);
+            const bit_set = (sprite_byte & (@as(u8, 0x80) >> @intCast(bit_idx))) != 0;
+            if (!bit_set) continue;
 
-            if (old_pixel == 1 and state.display[display_idx] == 0) {
+            const idx = y * State.display_width + x;
+            const old_pixel = state.display[idx];
+            const new_pixel = old_pixel ^ 1;
+            state.display[idx] = new_pixel;
+
+            if (old_pixel == 1 and new_pixel == 0) {
                 state.V[0xF] = 1;
             }
         }
     }
+
     state.pc += State.instruction_size;
     state.should_draw = true;
 }
 
-test "DRW" {
-    var state = State{};
-    state.I = 0; // Location of the sprite of a "0"
-    const x: usize = 10;
-    var y: usize = 15;
-    const width = State.display_width;
-    state.V[0] = x;
-    state.V[1] = @intCast(y);
-    execute(0xD015, &state);
-
-    try std.testing.expectEqual(0, state.V[0xF]);
-    try std.testing.expectEqual(true, state.should_draw);
-
-    try std.testing.expectEqual(1, state.display[y * width + x]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 1]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 2]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
-
-    y += 1;
-    try std.testing.expectEqual(1, state.display[y * width + x]);
-    try std.testing.expectEqual(0, state.display[y * width + x + 1]);
-    try std.testing.expectEqual(0, state.display[y * width + x + 2]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
-
-    y += 1;
-    try std.testing.expectEqual(1, state.display[y * width + x]);
-    try std.testing.expectEqual(0, state.display[y * width + x + 1]);
-    try std.testing.expectEqual(0, state.display[y * width + x + 2]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
-
-    y += 1;
-    try std.testing.expectEqual(1, state.display[y * width + x]);
-    try std.testing.expectEqual(0, state.display[y * width + x + 1]);
-    try std.testing.expectEqual(0, state.display[y * width + x + 2]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
-
-    y += 1;
-    try std.testing.expectEqual(1, state.display[y * width + x]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 1]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 2]);
-    try std.testing.expectEqual(1, state.display[y * width + x + 3]);
+fn makeSprite(state: *State, bytes: []const u8) void {
+    @memcpy(state.memory[state.I..][0..bytes.len], bytes);
 }
 
-test "DRW collision" {
+test "DRW: normal draw within screen, no wrapping or clipping" {
     var state = State{};
-    state.I = 0; // Location of the sprite of a "0"
-    const x: usize = 10;
-    const y: usize = 15;
-    const width = State.display_width;
-    state.V[0] = x;
-    state.V[1] = @intCast(y);
+    state.I = 0;
+    state.V[0] = 10; // X
+    state.V[1] = 5; // Y
+    makeSprite(&state, &.{0b11110000});
+    DRW(0xD011, &state);
 
-    // Draw sprite first time
-    execute(0xD015, &state);
-    try std.testing.expectEqual(0, state.V[0xF]); // No collision first time
+    try expect(state.display[5 * 64 + 10] == 1);
+    try expect(state.display[5 * 64 + 13] == 1);
+    try expect(state.V[0xF] == 0);
+}
 
-    // Draw same sprite in same location
-    execute(0xD015, &state);
-    try std.testing.expectEqual(1, state.V[0xF]); // Should detect collision
-    try std.testing.expectEqual(0, state.display[y * width + x]); // Pixels should be XORed to 0
+test "DRW: pixels beyond right edge are clipped (no wrapping)" {
+    var state = State{};
+    state.I = 0;
+    state.V[0] = 62; // starts near right edge
+    state.V[1] = 0;
+    makeSprite(&state, &.{0b11111111});
+    DRW(0xD011, &state);
+
+    // pixels at x=62 and 63 are drawn, rest clipped
+    try expect(state.display[0 * 64 + 62] == 1);
+    try expect(state.display[0 * 64 + 63] == 1);
+    // ensure wrap did NOT occur
+    try expect(state.display[0 * 64 + 0] == 0);
+}
+
+test "DRW: sprite rows beyond bottom edge are clipped (no wrapping)" {
+    var state = State{};
+    state.I = 0;
+    state.V[0] = 0;
+    state.V[1] = 31; // bottom-most visible row
+    makeSprite(&state, &.{ 0xFF, 0xFF }); // height 2, one row should clip
+    DRW(0xD012, &state);
+
+    // First row visible (y=31)
+    for (0..8) |x| {
+        try expect(state.display[31 * 64 + x] == 1);
+    }
+
+    // Rest of that row (x ≥ 8) should be 0
+    for (8..64) |x| {
+        try expect(state.display[31 * 64 + x] == 0);
+    }
+
+    // Second sprite row is clipped (off-screen)
+    // Confirm that no pixels in wrapped area are drawn
+    for (0..64) |x| {
+        try expect(state.display[x] == 0);
+    }
+}
+
+test "DRW: coordinates wrap but sprite clips" {
+    var state = State{};
+    state.I = 0;
+    state.V[0] = 64; // wraps to x=0
+    state.V[1] = 32; // wraps to y=0
+    makeSprite(&state, &.{0b11110000});
+    DRW(0xD011, &state);
+
+    // effectively drawn at top-left corner
+    try expect(state.display[0 * 64 + 0] == 1);
+    try expect(state.display[0 * 64 + 3] == 1);
+    try expect(state.V[0xF] == 0);
+}
+
+test "DRW: collision sets VF to 1 when pixel erased" {
+    var state = State{};
+    state.I = 0;
+    state.V[0] = 0;
+    state.V[1] = 0;
+    makeSprite(&state, &.{0b11110000});
+    DRW(0xD011, &state); // draw once
+    DRW(0xD011, &state); // draw again (should erase same pixels)
+    try expectEqual(@as(u8, 1), state.V[0xF]);
+}
+
+test "DRW: entirely off-screen sprite (coordinates wrap) draws correctly" {
+    var state = State{};
+    state.I = 0;
+    state.V[0] = 128; // wraps twice -> 0
+    state.V[1] = 64; // wraps twice -> 0
+    makeSprite(&state, &.{0b10000000});
+    DRW(0xD011, &state);
+    try expect(state.display[0] == 1);
 }
 
 // Ex9E - SKP Vx
@@ -717,13 +757,13 @@ test "SKP" {
     state.V[0xA] = 5;
     execute(0xEA9E, &state);
     var next_pc_value = initial_pc + (State.instruction_size * 2);
-    try std.testing.expectEqual(next_pc_value, state.pc);
+    try expectEqual(next_pc_value, state.pc);
 
     state.keys[5] = false;
     state.V[0xA] = 5;
     execute(0xEA9E, &state);
     next_pc_value += State.instruction_size;
-    try std.testing.expectEqual(next_pc_value, state.pc);
+    try expectEqual(next_pc_value, state.pc);
 }
 
 // ExA1 - SKNP Vx
@@ -748,13 +788,13 @@ test "SKNP" {
     execute(0xEAA1, &state);
     var next_pc_value = initial_pc + (State.instruction_size * 2);
 
-    try std.testing.expectEqual(next_pc_value, state.pc);
+    try expectEqual(next_pc_value, state.pc);
 
     state.keys[5] = true;
     state.V[0xA] = 5;
     execute(0xEAA1, &state);
     next_pc_value += State.instruction_size;
-    try std.testing.expectEqual(next_pc_value, state.pc);
+    try expectEqual(next_pc_value, state.pc);
 }
 
 // Fx07 - LD Vx, DT
@@ -771,7 +811,7 @@ test "LDVDT" {
     var state = State{};
     state.delay_timer = 0x12;
     execute(0xFB07, &state);
-    try std.testing.expectEqual(state.delay_timer, state.V[0xB]);
+    try expectEqual(state.delay_timer, state.V[0xB]);
 }
 
 // Fx0A - LD Vx, K
@@ -791,28 +831,28 @@ test "LDK" {
     execute(0xA123, &state); // LDI
 
     // Nothing should have changed as execute becomes no-op when waiting for key to be pressed
-    try std.testing.expectEqual(initial_pc, state.pc);
+    try expectEqual(initial_pc, state.pc);
 
     // Press key 'A'
     state.keys[0xA] = true;
 
     execute(0xA123, &state); // LDI
     // Nothing should have changed as execute becomes no-op when waiting for key to be released
-    try std.testing.expectEqual(initial_pc, state.pc);
+    try expectEqual(initial_pc, state.pc);
 
     // Release key 'A'
     state.keys[0xA] = false;
 
     // Execution resumed and LDK should finish executing
     execute(0xA123, &state); // LDI
-    try std.testing.expectEqual(initial_pc + State.instruction_size, state.pc);
+    try expectEqual(initial_pc + State.instruction_size, state.pc);
 
     // Execution resumed and pc should advance
     execute(0xA123, &state); // LDI
-    try std.testing.expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
+    try expectEqual(initial_pc + (State.instruction_size * 2), state.pc);
 
     // Key is stored in register
-    try std.testing.expectEqual(0xA, state.V[5]);
+    try expectEqual(0xA, state.V[5]);
 }
 
 // Returns true if the interpreter is waiting for a key to be pressed
@@ -862,9 +902,9 @@ test "LDK_waiting_for_key" {
 
     // We are no longer waiting and we should store key in register Vx
     try std.testing.expect(!LDK_waiting_for_key(&state));
-    try std.testing.expectEqual(0xA, state.V[5]);
-    try std.testing.expectEqual(null, state.register_waiting_for_key);
-    try std.testing.expectEqual(initial_pc + State.instruction_size, state.pc);
+    try expectEqual(0xA, state.V[5]);
+    try expectEqual(null, state.register_waiting_for_key);
+    try expectEqual(initial_pc + State.instruction_size, state.pc);
 }
 
 // Fx15 - LD DT, Vx
@@ -881,11 +921,11 @@ test "LDDTV" {
     var state = State{};
     state.V[0xB] = 0x13;
     execute(0xFB15, &state);
-    try std.testing.expectEqual(state.V[0xB], state.delay_timer);
+    try expectEqual(state.V[0xB], state.delay_timer);
 
     state.V[0xA] = 0x15;
     execute(0xFA15, &state);
-    try std.testing.expectEqual(state.V[0xA], state.delay_timer);
+    try expectEqual(state.V[0xA], state.delay_timer);
 }
 
 // Fx18 - LD ST, Vx
@@ -902,11 +942,11 @@ test "LDST" {
     var state = State{};
     state.V[0xB] = 0x13;
     execute(0xFB18, &state);
-    try std.testing.expectEqual(state.V[0xB], state.sound_timer);
+    try expectEqual(state.V[0xB], state.sound_timer);
 
     state.V[0xA] = 0x20;
     execute(0xFA18, &state);
-    try std.testing.expectEqual(state.V[0xA], state.sound_timer);
+    try expectEqual(state.V[0xA], state.sound_timer);
 }
 
 // Fx1E - ADD I, Vx
@@ -924,7 +964,7 @@ test "ADDI" {
     state.I = 5;
     state.V[0xC] = 5;
     execute(0xFC1E, &state);
-    try std.testing.expectEqual(10, state.I);
+    try expectEqual(10, state.I);
 }
 
 // Fx29 - LD F, Vx
@@ -943,7 +983,7 @@ test "LDF" {
     var state = State{};
     state.V[0xC] = 5;
     execute(0xFC29, &state);
-    try std.testing.expectEqual(state.V[0xC] * State.default_sprites_height, state.I);
+    try expectEqual(state.V[0xC] * State.default_sprites_height, state.I);
 }
 
 // Fx33 - LD B, Vx
@@ -963,9 +1003,9 @@ test "LDB" {
     state.I = 50;
     state.V[0xC] = 123;
     execute(0xFC33, &state);
-    try std.testing.expectEqual(1, state.memory[state.I]);
-    try std.testing.expectEqual(2, state.memory[state.I + 1]);
-    try std.testing.expectEqual(3, state.memory[state.I + 2]);
+    try expectEqual(1, state.memory[state.I]);
+    try expectEqual(2, state.memory[state.I + 1]);
+    try expectEqual(3, state.memory[state.I + 2]);
 }
 
 // Fx55 - LD [I], Vx
@@ -992,9 +1032,9 @@ test "LDIVX" {
     execute(0xFF55, &state);
     for (0..0xF + 1) |i| {
         const asu8: u8 = @intCast(i);
-        try std.testing.expectEqual(asu8, state.memory[initial_I + i]);
+        try expectEqual(asu8, state.memory[initial_I + i]);
     }
-    try std.testing.expectEqual(initial_I + 0xF + 1, state.I);
+    try expectEqual(initial_I + 0xF + 1, state.I);
 }
 
 // Fx65 - LD Vx, [I]
@@ -1022,7 +1062,7 @@ test "LDVXI" {
     execute(0xFF65, &state);
     for (0..0xF + 1) |i| {
         const asu8: u8 = @intCast(i);
-        try std.testing.expectEqual(asu8, state.V[i]);
+        try expectEqual(asu8, state.V[i]);
     }
-    try std.testing.expectEqual(initial_I + 0xF + 1, state.I);
+    try expectEqual(initial_I + 0xF + 1, state.I);
 }

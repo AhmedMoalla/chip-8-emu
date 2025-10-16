@@ -4,7 +4,7 @@ const f = @import("frontends.zig");
 const Args = @This();
 
 rom_path: []const u8,
-tick_rate: u32 = 20,
+tick_rate: u32 = 8, // default = 8 * 60fps = 500Hz
 
 frontend: f.Frontend.Kind,
 
