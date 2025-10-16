@@ -9,16 +9,6 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
-    const raylib_dep = b.dependency("raylib_zig", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const raylib = raylib_dep.module("raylib"); // main raylib module
-    const raygui = raylib_dep.module("raygui"); // raygui module
-    const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
-    raylib_artifact.root_module.addCMacro("SUPPORT_CUSTOM_FRAME_CONTROL", "");
-
     const exe = b.addExecutable(.{
         .name = "chip_8_emu",
         .root_module = b.createModule(.{
@@ -31,9 +21,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    exe.linkLibrary(raylib_artifact);
-    exe.root_module.addImport("raylib", raylib);
-    exe.root_module.addImport("raygui", raygui);
+    buildRaylib(b, target, optimize, exe);
 
     b.installArtifact(exe);
 
@@ -63,4 +51,21 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_mod_tests.step);
     test_step.dependOn(&run_exe_tests.step);
+}
+
+fn buildRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, exe: *std.Build.Step.Compile) void {
+    const raylib_dep = b.dependency("raylib_zig", .{
+        .target = target,
+        .optimize = optimize,
+        .linux_display_backend = .X11,
+    });
+
+    const raylib = raylib_dep.module("raylib"); // main raylib module
+    const raygui = raylib_dep.module("raygui"); // raygui module
+    const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
+    raylib_artifact.root_module.addCMacro("SUPPORT_CUSTOM_FRAME_CONTROL", "");
+
+    exe.linkLibrary(raylib_artifact);
+    exe.root_module.addImport("raylib", raylib);
+    exe.root_module.addImport("raygui", raygui);
 }
