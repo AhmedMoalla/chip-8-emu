@@ -437,23 +437,23 @@ fn SHR(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} SHR X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
     const carry: u8 = state.V[instr.x] & 0x1;
-    state.V[instr.x] >>= 1;
+    state.V[instr.x] = state.V[instr.y] >> 1;
     state.pc += State.instruction_size;
     state.V[0xF] = carry;
 }
 
 test "SHR" {
     var state = State{};
-    var initial_value: u8 = 0xF;
-    state.V[0xA] = initial_value;
+    state.V[0xA] = 241;
+    state.V[0xD] = 123;
     execute(0x8AD6, &state);
-    try std.testing.expectEqual(initial_value >> 1, state.V[0xA]);
+    try std.testing.expectEqual(state.V[0xD] >> 1, state.V[0xA]);
     try std.testing.expectEqual(1, state.V[0xF]);
 
-    initial_value = 0x8;
-    state.V[0xA] = initial_value;
+    state.V[0xA] = 240;
+    state.V[0xD] = 0xF;
     execute(0x8AD6, &state);
-    try std.testing.expectEqual(initial_value >> 1, state.V[0xA]);
+    try std.testing.expectEqual(state.V[0xD] >> 1, state.V[0xA]);
     try std.testing.expectEqual(0, state.V[0xF]);
 }
 
@@ -493,18 +493,24 @@ fn SHL(instruction: u16, state: *State) void {
     const instr = pxy0(instruction);
     log.debug("[0x{X:0>4}] {X:0>4} SHL X={X} Y={X}", .{ state.pc, instruction, instr.x, instr.y });
     const carry: u8 = (state.V[instr.x] >> 7) & 0x1;
-    state.V[instr.x] <<= 1;
+    state.V[instr.x] = state.V[instr.y] << 1;
     state.pc += State.instruction_size;
     state.V[0xF] = carry;
 }
 
 test "SHL" {
     var state = State{};
-    const initial_value: u8 = 240;
-    state.V[0xA] = initial_value;
+    state.V[0xA] = 240;
+    state.V[0xD] = 123;
     execute(0x8ADE, &state);
-    try std.testing.expectEqual(initial_value << 1, state.V[0xA]);
+    try std.testing.expectEqual(state.V[0xD] << 1, state.V[0xA]);
     try std.testing.expectEqual(1, state.V[0xF]);
+
+    state.V[0xA] = 1;
+    state.V[0xD] = 123;
+    execute(0x8ADE, &state);
+    try std.testing.expectEqual(state.V[0xD] << 1, state.V[0xA]);
+    try std.testing.expectEqual(0, state.V[0xF]);
 }
 
 // 9xy0 - SNE Vx, Vy
