@@ -1,13 +1,14 @@
 const std = @import("std");
+
 const State = @import("State.zig");
-const f = @import("frontends.zig");
-const Frontend = f.Frontend;
+const Frontend = @import("frontends.zig").Frontend;
+const default_backend = @import("backends/Backend.zig").default_backend;
 const Args = @import("Args.zig");
 
 pub const std_options: std.Options = .{
-    .log_level = .debug,
+    .log_level = .info,
     .log_scope_levels = &[_]std.log.ScopeLevel{
-        .{ .scope = .instr, .level = .info },
+        .{ .scope = .bchip8, .level = .info },
     },
 };
 
@@ -18,7 +19,7 @@ pub fn main() !void {
 
     const args = try Args.parse(allocator);
 
-    var state = try State.init(args.rom_path, args.tick_rate);
+    var state = try State.init(default_backend, args.rom_path, args.tick_rate);
     var front = switch (args.frontend) {
         .raylib => try Frontend.init(.raylib, .{ .allocator = allocator }),
         .console => try Frontend.init(.console, .{}),
@@ -37,5 +38,5 @@ pub fn main() !void {
 }
 
 test {
-    _ = @import("interpreter.zig");
+    _ = @import("tests/tests.zig");
 }

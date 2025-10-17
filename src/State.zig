@@ -1,5 +1,6 @@
 const std = @import("std");
 const interpreter = @import("interpreter.zig");
+const Backend = @import("backends/Backend.zig").Backend;
 
 const State = @This();
 
@@ -58,8 +59,9 @@ key_pressed: ?u8 = null,
 
 rom_size: usize = undefined,
 tick_rate: u32 = undefined,
+backend: Backend = undefined,
 
-pub fn init(rom_path: []const u8, tick_rate: u32) !State {
+pub fn init(backend: Backend, rom_path: []const u8, tick_rate: u32) !State {
     var state = State{
         .prng = rnd: {
             var seed: u64 = undefined;
@@ -68,6 +70,7 @@ pub fn init(rom_path: []const u8, tick_rate: u32) !State {
             break :rnd prng.random();
         },
         .tick_rate = tick_rate,
+        .backend = backend,
     };
     state.rom_size = loadROM(rom_path, &state.memory) catch |err| switch (err) {
         error.FileNotFound => {
@@ -82,7 +85,7 @@ pub fn init(rom_path: []const u8, tick_rate: u32) !State {
 pub fn executeNextInstruction(self: *State) void {
     for (0..self.tick_rate) |_| {
         const instruction = (@as(u16, self.memory[self.pc]) << 8) | self.memory[self.pc + 1];
-        interpreter.execute(instruction, self);
+        interpreter.execute(self.backend, instruction, self);
     }
 
     if (self.delay_timer > 0) self.delay_timer -= 1;
