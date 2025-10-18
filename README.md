@@ -7,42 +7,42 @@ For more informations about Chip-8:
 
 ## Test Suite Status
 This is the current status of every test case in [Timendus/chip8-test-suite](https://github.com/Timendus/chip8-test-suite):
-- [X] Chip-8 Logo
+- [X] Chip-8 Logo (`./chip_8_emu roms/1-chip8-logo.ch8`)
 
   ![](docs/1-chip-8-logo.png)
-- [X] IBM Logo
+- [X] IBM Logo (`./chip_8_emu roms/2-ibm-logo.ch8`)
   
   ![](docs/2-ibm-logo.png)
-- [X] Corax+ Opcode Test
+- [X] Corax+ Opcode Test (`./chip_8_emu roms/3-corax+.ch8`)
   
   ![](docs/3-corax+.png)
-- [X] Flags Test
+- [X] Flags Test (`./chip_8_emu roms/4-flags.ch8`)
   
   ![](docs/4-flags.png)
 - [ ] Quirks Test
   
-  - [X] Chip-8
+  - [X] Chip-8 (`./chip_8_emu roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-chip-8.png)
 
-  - [ ] Super-Chip (Modern)
+  - [ ] Super-Chip (Modern) (`./chip_8_emu -b schip roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-super-chip-modern.png)
 
-  - [ ] Super-Chip (Legacy)
+  - [X] Super-Chip (Legacy) (`./chip_8_emu -b schip roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-super-chip-legacy.png)
 
-  - [ ] XO-Chip
+  - [ ] XO-Chip (`./chip_8_emu roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-xo-chip.png)
   
-- [X] Keypad Test
+- [X] Keypad Test (`./chip_8_emu roms/6-keypad.ch8`)
   
   ![](docs/6-keypad.gif)
-- [X] Beep Test (Sound emitted according to test specification)
+- [X] Beep Test (Sound emitted according to test specification) (`./chip_8_emu roms/7-beep.ch8`)
   
   ![](docs/7-beep.gif)
-- [ ] Scrolling Test
+- [ ] Scrolling Test (`./chip_8_emu roms/8-scrolling.ch8`)
   
   ![](docs/8-scrolling.gif)

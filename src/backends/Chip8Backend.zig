@@ -1,43 +1,13 @@
 const std = @import("std");
 const State = @import("../State.zig");
+const Backend = @import("Backend.zig");
+
+const pnnn = Backend.pnnn;
+const pxkk = Backend.pxkk;
+const pxy0 = Backend.pxy0;
+const px00 = Backend.px00;
 
 const log = std.log.scoped(.bchip8);
-
-// For instruction in format PNNN returns NNN
-fn pnnn(instruction: u16) u16 {
-    return instruction & 0xFFF;
-}
-
-// For instruction in format PXKK returns X and KK
-fn pxkk(instruction: u16) struct { x: usize, kk: u8 } {
-    return .{
-        .x = (instruction & 0x0F00) >> 8,
-        .kk = @intCast(instruction & 0xFF),
-    };
-}
-
-// For instruction in format PXY0 return X and Y
-fn pxy0(instruction: u16) struct { x: usize, y: usize } {
-    return .{ .x = (instruction & 0x0F00) >> 8, .y = (instruction & 0x00F0) >> 4 };
-}
-
-// For instruction in format PX00 return X
-fn px00(instruction: u16) u4 {
-    return @intCast((instruction & 0x0F00) >> 8);
-}
-
-test "helper functions" {
-    const expectEqual = std.testing.expectEqual;
-
-    try expectEqual(0x123, pnnn(0xA123));
-    const result1 = pxkk(0xA123);
-    try expectEqual(1, result1.x);
-    try expectEqual(0x23, result1.kk);
-    const result2 = pxy0(0xA123);
-    try expectEqual(1, result2.x);
-    try expectEqual(2, result2.y);
-    try expectEqual(1, px00(0xA123));
-}
 
 // 0nnn - SYS addr
 // Jump to a machine code routine at nnn.
