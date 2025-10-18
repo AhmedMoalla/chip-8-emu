@@ -20,7 +20,7 @@ pub fn main() !void {
     const args = try Args.parse(allocator);
 
     var state = try State.init(default_backend, args.rom_path, args.tick_rate);
-    var front = try Frontend.initFromArgs(args);
+    var front = try Frontend.initFromArgs(allocator, args);
     defer front.deinit();
 
     while (!front.shouldStop()) {

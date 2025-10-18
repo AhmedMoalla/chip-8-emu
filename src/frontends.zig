@@ -19,10 +19,10 @@ pub const Frontend = union(enum) {
 
     pub const Kind = @typeInfo(Frontend).@"union".tag_type.?;
 
-    pub fn initFromArgs(opts: anytype) !@This() {
+    pub fn initFromArgs(allocator: std.mem.Allocator, opts: anytype) !@This() {
         return switch (opts.frontend) {
             .raylib => try Frontend.init(.raylib, .{
-                .allocator = opts.allocator,
+                .allocator = allocator,
                 .scale = opts.scale,
                 .target_fps = opts.target_fps,
             }),
