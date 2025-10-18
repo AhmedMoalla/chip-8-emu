@@ -22,6 +22,17 @@ const ArgsParsingError = error{
     InvalidTickRate,
 };
 
+pub const usage =
+    \\Usage: chip8-emu [options] [rom_path]
+    \\
+    \\Options:
+    \\  -f,--frontend [console|raylib]       frontend used by the emulator. default: raylib
+    \\  -b,--backend [chip8|schip]           backend used by the emulator. default: chip8
+    \\  -s,--scale                           scale used by the frontend to render the display. default: 8
+    \\  -p,--target-fps                      target FPS to reach by the frontend. default: 60
+    \\  -t,--tick-rate                       tick rate at which the emulator runs per frame. default: 8 (8 * 60fps = 500Hz)
+;
+
 pub fn parse(allocator: std.mem.Allocator) ArgsParsingError!Args {
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
@@ -38,26 +49,16 @@ fn parseIterator(it: anytype) ArgsParsingError!Args {
         if (std.mem.eql(u8, arg, "-f") or std.mem.eql(u8, arg, "--frontend")) {
             const frontend_arg = it.next();
             if (frontend_arg) |frontend| {
-                if (std.mem.eql(u8, frontend, "raylib")) {
-                    args.frontend = .raylib;
-                } else if (std.mem.eql(u8, frontend, "console")) {
-                    args.frontend = .console;
-                } else {
+                args.frontend = std.meta.stringToEnum(f.Frontend.Kind, frontend) orelse
                     return ArgsParsingError.UnrecognizedFrontend;
-                }
             } else {
                 return ArgsParsingError.UnrecognizedFrontend;
             }
         } else if (std.mem.eql(u8, arg, "-b") or std.mem.eql(u8, arg, "--backend")) {
             const backend_arg = it.next();
             if (backend_arg) |backend| {
-                if (std.mem.eql(u8, backend, "chip8")) {
-                    args.backend = .chip8;
-                } else if (std.mem.eql(u8, backend, "schip")) {
-                    args.backend = .schip;
-                } else {
+                args.backend = std.meta.stringToEnum(b.Backend.Kind, backend) orelse
                     return ArgsParsingError.UnrecognizedBackend;
-                }
             } else {
                 return ArgsParsingError.UnrecognizedBackend;
             }

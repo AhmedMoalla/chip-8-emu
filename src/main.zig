@@ -17,7 +17,11 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const args = try Args.parse(allocator);
+    const args = Args.parse(allocator) catch |err| {
+        std.log.info("{s}\n", .{Args.usage});
+        std.log.err("{s}", .{@errorName(err)});
+        std.process.exit(1);
+    };
 
     const back = Backend.initFromArgs(args);
     var state = try State.init(back, args.rom_path, args.tick_rate);
