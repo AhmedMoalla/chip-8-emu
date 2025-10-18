@@ -20,10 +20,7 @@ pub fn main() !void {
     const args = try Args.parse(allocator);
 
     var state = try State.init(default_backend, args.rom_path, args.tick_rate);
-    var front = switch (args.frontend) {
-        .raylib => try Frontend.init(.raylib, .{ .allocator = allocator }),
-        .console => try Frontend.init(.console, .{}),
-    };
+    var front = try Frontend.initFromArgs(args);
     defer front.deinit();
 
     while (!front.shouldStop()) {
@@ -39,4 +36,5 @@ pub fn main() !void {
 
 test {
     _ = @import("tests/tests.zig");
+    _ = @import("Args.zig");
 }

@@ -6,7 +6,7 @@ pub const default_backend: Backend = .{ .chip8 = Chip8Backend{} };
 
 pub const Backend = union(enum) {
     chip8: Chip8Backend,
-    super_chip: SuperChipBackend,
+    schip: SuperChipBackend,
 
     pub const Kind = @typeInfo(Backend).@"union".tag_type.?;
 

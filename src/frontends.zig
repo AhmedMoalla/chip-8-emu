@@ -1,5 +1,6 @@
 const std = @import("std");
 const State = @import("State.zig");
+const Args = @import("Args.zig");
 
 pub const beep_data = @embedFile("assets/beep.wav");
 pub const beep_data_extension = ".wav";
@@ -17,6 +18,17 @@ pub const Frontend = union(enum) {
     raylib: RaylibFrontend,
 
     pub const Kind = @typeInfo(Frontend).@"union".tag_type.?;
+
+    pub fn initFromArgs(opts: anytype) !@This() {
+        return switch (opts.frontend) {
+            .raylib => try Frontend.init(.raylib, .{
+                .allocator = opts.allocator,
+                .scale = opts.scale,
+                .target_fps = opts.target_fps,
+            }),
+            .console => try Frontend.init(.console, .{}),
+        };
+    }
 
     pub fn init(comptime kind: Frontend.Kind, opts: FrontendOptions(kind)) !@This() {
         const field_name = @tagName(kind);
@@ -100,8 +112,8 @@ const ConsoleFrontend = struct {
 // - GetFPS()
 const RaylibFrontend = struct {
     const Options = struct {
-        scale: f32 = 8,
-        target_fps: u32 = 60,
+        scale: f32,
+        target_fps: u32,
         allocator: std.mem.Allocator,
     };
 
