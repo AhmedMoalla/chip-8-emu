@@ -21,28 +21,54 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
   ![](docs/4-flags.png)
 - [ ] Quirks Test
   
-  - [X] Chip-8 (`./chip_8_emu roms/5-quirks.ch8`)
+  - [X] Chip-8 (`./chip_8_emu -m 1FF=1 roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-chip-8.png)
 
-  - [ ] Super-Chip (Modern) (`./chip_8_emu -b schip roms/5-quirks.ch8`)
+  - [ ] Super-Chip (Modern) (`./chip_8_emu -b schip -m 1FF=2 roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-super-chip-modern.png)
 
-  - [X] Super-Chip (Legacy) (`./chip_8_emu -b schip roms/5-quirks.ch8`)
+  - [X] Super-Chip (Legacy) (`./chip_8_emu -b schip -m 1FF=4 roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-super-chip-legacy.png)
 
-  - [ ] XO-Chip (`./chip_8_emu roms/5-quirks.ch8`)
+  - [ ] XO-Chip (`./chip_8_emu -m 1FF=3 roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-xo-chip.png)
   
-- [X] Keypad Test (`./chip_8_emu roms/6-keypad.ch8`)
+- [X] Keypad Test
+  - [X] KeyUp (`./chip_8_emu -t 20 -m 1FF=1 roms/6-keypad.ch8`)
   
-  ![](docs/6-keypad.gif)
+    ![](docs/6-keypad-up.gif)
+
+  - [X] KeyDown (`./chip_8_emu -t 20 -m 1FF=2 roms/6-keypad.ch8`)
+  
+    ![](docs/6-keypad-down.gif)
+
+  - [X] GetKey (`./chip_8_emu -t 20 -m 1FF=3 roms/6-keypad.ch8`)
+  
+    ![](docs/6-keypad-getkey.gif)
 - [X] Beep Test (Sound emitted according to test specification) (`./chip_8_emu roms/7-beep.ch8`)
   
   ![](docs/7-beep.gif)
 - [ ] Scrolling Test (`./chip_8_emu roms/8-scrolling.ch8`)
+  - [ ] Super-Chip (Modern + lores) (`./chip_8_emu -m 1FF=1 roms/8-scrolling.ch8`)
   
-  ![](docs/8-scrolling.gif)
+    ![](docs/8-scrolling-super-chip-modern-lores.gif)
+
+  - [ ] Super-Chip (Legacy + lores)  (`./chip_8_emu -m 1FF=2 roms/8-scrolling.ch8`)
+  
+    ![](docs/8-scrolling-super-chip-legacy-lores.gif)
+
+  - [ ] Super-Chip (hires) (`./chip_8_emu -m 1FF=3 roms/8-scrolling.ch8`)
+  
+    ![](docs/8-scrolling-super-chip-hires.gif)
+
+  - [ ] XO-Chip (lores) (`./chip_8_emu -m 1FF=4 roms/8-scrolling.ch8`)
+  
+    ![](docs/8-scrolling-xo-chip-lores.gif)
+
+  - [ ] XO-Chip (hires) (`./chip_8_emu -m 1FF=5 roms/8-scrolling.ch8`)
+  
+    ![](docs/8-scrolling-xo-chip-hires.gif)

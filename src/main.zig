@@ -23,8 +23,12 @@ pub fn main() !void {
         std.process.exit(1);
     };
 
-    const back = Backend.initFromArgs(args);
-    var state = try State.init(back, args.rom_path, args.tick_rate);
+    var state = try State.init(args.rom_path, .{
+        .backend = Backend.initFromArgs(args),
+        .tick_rate = args.tick_rate,
+        .set_memory_address = args.set_memory_address,
+        .set_memory_address_value = args.set_memory_address_value,
+    });
     var front = try Frontend.initFromArgs(allocator, args);
     defer front.deinit();
 

@@ -61,7 +61,14 @@ rom_size: usize = undefined,
 tick_rate: u32 = undefined,
 backend: Backend = undefined,
 
-pub fn init(backend: Backend, rom_path: []const u8, tick_rate: u32) !State {
+pub const StateOptions = struct {
+    backend: Backend,
+    tick_rate: u32,
+    set_memory_address: ?usize = null,
+    set_memory_address_value: ?u8 = null,
+};
+
+pub fn init(rom_path: []const u8, opts: StateOptions) !State {
     var state = State{
         .prng = rnd: {
             var seed: u64 = undefined;
@@ -69,8 +76,8 @@ pub fn init(backend: Backend, rom_path: []const u8, tick_rate: u32) !State {
             var prng = std.Random.DefaultPrng.init(seed);
             break :rnd prng.random();
         },
-        .tick_rate = tick_rate,
-        .backend = backend,
+        .tick_rate = opts.tick_rate,
+        .backend = opts.backend,
     };
     state.rom_size = loadROM(rom_path, &state.memory) catch |err| switch (err) {
         error.FileNotFound => {
@@ -79,6 +86,10 @@ pub fn init(backend: Backend, rom_path: []const u8, tick_rate: u32) !State {
         },
         else => return err,
     };
+
+    if (opts.set_memory_address) |address| {
+        state.memory[address] = opts.set_memory_address_value.?;
+    }
     return state;
 }
 
