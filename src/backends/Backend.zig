@@ -10,6 +10,16 @@ pub const Backend = union(enum) {
 
     pub const Kind = @typeInfo(Backend).@"union".tag_type.?;
 
+    pub fn initFromArgs(opts: anytype) @This() {
+        switch (opts.backend) {
+            inline else => |b| {
+                const field_name = @tagName(b);
+                const FieldType = @FieldType(@This(), field_name);
+                return @unionInit(@This(), field_name, FieldType{});
+            },
+        }
+    }
+
     // 0nnn - SYS addr
     // Jump to a machine code routine at nnn.
     // This instruction is only used on the old computers on which Chip-8 was originally implemented. It is ignored by modern interpreters.

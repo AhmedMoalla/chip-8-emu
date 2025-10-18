@@ -2,7 +2,7 @@ const std = @import("std");
 
 const State = @import("State.zig");
 const Frontend = @import("frontends.zig").Frontend;
-const default_backend = @import("backends/Backend.zig").default_backend;
+const Backend = @import("backends/Backend.zig").Backend;
 const Args = @import("Args.zig");
 
 pub const std_options: std.Options = .{
@@ -19,7 +19,8 @@ pub fn main() !void {
 
     const args = try Args.parse(allocator);
 
-    var state = try State.init(default_backend, args.rom_path, args.tick_rate);
+    const back = Backend.initFromArgs(args);
+    var state = try State.init(back, args.rom_path, args.tick_rate);
     var front = try Frontend.initFromArgs(allocator, args);
     defer front.deinit();
 

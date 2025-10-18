@@ -21,12 +21,14 @@ pub const Frontend = union(enum) {
 
     pub fn initFromArgs(allocator: std.mem.Allocator, opts: anytype) !@This() {
         return switch (opts.frontend) {
-            .raylib => try Frontend.init(.raylib, .{
-                .allocator = allocator,
-                .scale = opts.scale,
-                .target_fps = opts.target_fps,
-            }),
-            .console => try Frontend.init(.console, .{}),
+            .raylib => .{
+                .raylib = try RaylibFrontend.init(.{
+                    .allocator = allocator,
+                    .scale = opts.scale,
+                    .target_fps = opts.target_fps,
+                }),
+            },
+            .console => .{ .console = ConsoleFrontend{} },
         };
     }
 
