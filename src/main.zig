@@ -17,7 +17,10 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const args = Args.parse(allocator) catch |err| {
+    var args_it = try std.process.argsWithAllocator(allocator);
+    defer args_it.deinit();
+
+    const args = Args.parse(&args_it) catch |err| {
         std.log.info("{s}\n", .{Args.usage});
         std.log.err("{s}", .{@errorName(err)});
         std.process.exit(1);

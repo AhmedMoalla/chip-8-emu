@@ -41,12 +41,10 @@ pub const usage =
     \\  -s,--set-memory [1FF=1]         set a specific memory location (Hexadecimal) to a given (Hexadecimal) value at rom loading time. min_address=0 | max_address=0xFFF
 ;
 
-pub fn parse(allocator: std.mem.Allocator) ArgsParsingError!Args {
-    var args = try std.process.argsWithAllocator(allocator);
-    defer args.deinit();
+pub fn parse(args: *std.process.ArgIterator) ArgsParsingError!Args {
     _ = args.skip(); // Program name
 
-    return parseIterator(&args);
+    return parseIterator(args);
 }
 
 fn parseIterator(it: anytype) ArgsParsingError!Args {
