@@ -1,12 +1,14 @@
 const State = @import("../State.zig");
 const Chip8Backend = @import("Chip8Backend.zig");
 const SuperChipBackend = @import("SuperChipBackend.zig");
+const XOChipBackend = @import("XOChipBackend.zig");
 
 pub const default_backend: Backend = .{ .chip8 = Chip8Backend{} };
 
 pub const Backend = union(enum) {
     chip8: Chip8Backend,
     schip: SuperChipBackend,
+    xochip: XOChipBackend,
 
     pub const Kind = @typeInfo(Backend).@"union".tag_type.?;
 
