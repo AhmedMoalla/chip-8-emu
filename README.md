@@ -19,7 +19,7 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
 - [X] Flags Test (`./chip_8_emu roms/4-flags.ch8`)
   
   ![](docs/4-flags.png)
-- [ ] Quirks Test
+- [X] Quirks Test
   
   - [X] Chip-8 (`./chip_8_emu -m 1FF=1 roms/5-quirks.ch8`)
   
@@ -33,7 +33,7 @@ This is the current status of every test case in [Timendus/chip8-test-suite](htt
   
     ![](docs/5-quirks-super-chip-legacy.png)
 
-  - [ ] XO-Chip (`./chip_8_emu -b xochip -m 1FF=3 roms/5-quirks.ch8`)
+  - [X] XO-Chip (`./chip_8_emu -t 20 -b xochip -m 1FF=3 roms/5-quirks.ch8`)
   
     ![](docs/5-quirks-xo-chip.png)
   
