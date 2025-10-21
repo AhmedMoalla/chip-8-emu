@@ -1,18 +1,18 @@
 const std = @import("std");
 const State = @import("State.zig");
-const f = @import("frontends.zig");
-const b = @import("backends/Backend.zig");
+const FrontendKind = @import("frontends/Frontend.zig").Frontend.Kind;
+const BackendKind = @import("backends/Backend.zig").Backend.Kind;
 
 const Args = @This();
 
 rom_path: []const u8 = undefined,
 tick_rate: u32 = 8, // -t, --tick-rate | default = 8 * 60fps = 500Hz
 
-frontend: f.Frontend.Kind = .raylib, // -f, --frontend
+frontend: FrontendKind = .raylib, // -f, --frontend
 scale: f32 = 8, // -s, --scale
 target_fps: u32 = 60, // -p, --target-fps
 
-backend: b.Backend.Kind = .chip8, // -b, --backend
+backend: BackendKind = .chip8, // -b, --backend
 set_memory_address: ?usize = null, // -m, --set-memory
 set_memory_address_value: ?u8 = null,
 
@@ -55,13 +55,13 @@ fn parseIterator(it: anytype) ArgsParsingError!Args {
         if (std.mem.eql(u8, arg, "-f") or std.mem.eql(u8, arg, "--frontend")) {
             const frontend_arg = it.next();
             if (frontend_arg) |frontend| {
-                args.frontend = std.meta.stringToEnum(f.Frontend.Kind, frontend) orelse
+                args.frontend = std.meta.stringToEnum(FrontendKind, frontend) orelse
                     return ArgsParsingError.UnrecognizedFrontend;
             } else return ArgsParsingError.UnrecognizedFrontend;
         } else if (std.mem.eql(u8, arg, "-b") or std.mem.eql(u8, arg, "--backend")) {
             const backend_arg = it.next();
             if (backend_arg) |backend| {
-                args.backend = std.meta.stringToEnum(b.Backend.Kind, backend) orelse
+                args.backend = std.meta.stringToEnum(BackendKind, backend) orelse
                     return ArgsParsingError.UnrecognizedBackend;
             } else return ArgsParsingError.UnrecognizedBackend;
         } else if (std.mem.eql(u8, arg, "-s") or std.mem.eql(u8, arg, "--scale")) {

@@ -1,13 +1,14 @@
 const std = @import("std");
 
 const State = @import("State.zig");
-const Frontend = @import("frontends.zig").Frontend;
+const Frontend = @import("frontends/Frontend.zig").Frontend;
 const Backend = @import("backends/Backend.zig").Backend;
 const Args = @import("Args.zig");
 
 pub const std_options: std.Options = .{
     .log_level = .info,
     .log_scope_levels = &[_]std.log.ScopeLevel{
+        .{ .scope = .interpreter, .level = .info },
         .{ .scope = .bchip8, .level = .info },
     },
 };
