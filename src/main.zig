@@ -39,11 +39,12 @@ pub fn main() !void {
     while (!front.shouldStop()) {
         front.setKeys(&state.keys);
         state.executeNextInstruction();
-        front.draw(state.should_draw, state.display);
+        try front.draw(state.should_draw, state.display);
         state.should_draw = false;
         if (state.sound_timer > 0) {
             front.playSound();
         }
+        @memset(&state.keys, false);
     }
 }
 

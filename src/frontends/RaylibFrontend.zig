@@ -80,7 +80,7 @@ pub fn shouldStop(_: RaylibFrontend) bool {
     return rl.windowShouldClose();
 }
 
-pub fn draw(self: *RaylibFrontend, should_draw: bool, display: [State.display_resolution]u8) void {
+pub fn draw(self: *RaylibFrontend, should_draw: bool, display: [State.display_resolution]u8) !void {
     if (!should_draw) {
         self.waitForTargetFPS();
         return;

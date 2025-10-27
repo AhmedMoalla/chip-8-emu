@@ -20,14 +20,14 @@ pub const Frontend = union(enum) {
         };
     }
 
-    pub fn deinit(self: Frontend) void {
-        return switch (self) {
-            inline else => |impl| {
-                if (@hasDecl(@TypeOf(impl), "deinit")) {
+    pub fn deinit(self: *Frontend) void {
+        switch (self.*) {
+            inline else => |*impl| {
+                if (@hasDecl(@TypeOf(impl.*), "deinit")) {
                     impl.deinit();
                 }
             },
-        };
+        }
     }
 
     pub fn shouldStop(self: Frontend) bool {
@@ -36,20 +36,20 @@ pub const Frontend = union(enum) {
         };
     }
 
-    pub fn draw(self: *Frontend, should_draw: bool, display: [State.display_resolution]u8) void {
+    pub fn draw(self: *Frontend, should_draw: bool, display: [State.display_resolution]u8) !void {
         switch (self.*) {
-            inline else => |*impl| impl.draw(should_draw, display),
+            inline else => |*impl| try impl.draw(should_draw, display),
         }
     }
 
     pub fn playSound(self: Frontend) void {
-        return switch (self) {
+        switch (self) {
             inline else => |impl| {
                 if (@hasDecl(@TypeOf(impl), "playSound")) {
                     impl.playSound();
                 }
             },
-        };
+        }
     }
 
     pub fn setKeys(self: *Frontend, keys: []bool) void {

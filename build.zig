@@ -23,6 +23,9 @@ pub fn build(b: *std.Build) void {
 
     buildRaylib(b, target, optimize, exe);
 
+    const mibu_dep = b.dependency("mibu", .{});
+    exe.root_module.addImport("mibu", mibu_dep.module("mibu"));
+
     b.installArtifact(exe);
 
     const run_step = b.step("run", "Run the app");
