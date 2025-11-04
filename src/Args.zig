@@ -38,7 +38,7 @@ pub const usage =
     \\  -s,--scale                          scale used by the frontend to render the display. default: 8
     \\  -p,--target-fps                     target FPS to reach by the frontend. default: 60
     \\  -t,--tick-rate                      tick rate at which the emulator runs per frame. default: 8 (8 * 60fps = 500Hz)
-    \\  -s,--set-memory [1FF=1]         set a specific memory location (Hexadecimal) to a given (Hexadecimal) value at rom loading time. min_address=0 | max_address=0xFFF
+    \\  -s,--set-memory [1FF=1]             set a specific memory location (Hexadecimal) to a given (Hexadecimal) value at rom loading time. min_address=0 | max_address=0xFFF
 ;
 
 pub fn parse(args: *std.process.ArgIterator) ArgsParsingError!Args {

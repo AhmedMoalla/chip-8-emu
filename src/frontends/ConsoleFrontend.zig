@@ -13,8 +13,6 @@ const FrontendOptions = f.FrontendOptions;
 
 const ConsoleFrontend = @This();
 
-const stdin = std.fs.File.stdin();
-
 raw_term: term.RawTerm,
 should_stop: bool = false,
 
@@ -23,7 +21,7 @@ pub fn init(_: std.mem.Allocator, _: anytype) !ConsoleFrontend {
     var stdout_file = std.fs.File.stdout();
     var stdout_writer = stdout_file.writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
-
+    const stdin = std.fs.File.stdin();
     if (!std.posix.isatty(stdin.handle)) {
         try stdout.print("The current file descriptor is not a referring to a terminal.\n", .{});
         return error.StdinNotTTY;
@@ -33,6 +31,7 @@ pub fn init(_: std.mem.Allocator, _: anytype) !ConsoleFrontend {
 
     try term.enterAlternateScreen(stdout);
     try cursor.hide(stdout);
+    try stdout.flush();
 
     return ConsoleFrontend{
         .raw_term = raw_term,
@@ -45,9 +44,11 @@ pub fn deinit(self: *ConsoleFrontend) void {
     var stdout_writer = stdout_file.writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
 
+    self.raw_term.disableRawMode() catch {};
     cursor.show(stdout) catch {};
     term.exitAlternateScreen(stdout) catch {};
-    self.raw_term.disableRawMode() catch {};
+    color.resetAll(stdout) catch {};
+    stdout.flush() catch {};
 }
 
 pub fn shouldStop(self: ConsoleFrontend) bool {
@@ -57,6 +58,7 @@ pub fn shouldStop(self: ConsoleFrontend) bool {
 pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_resolution]u8) !void {
     if (!should_draw) return;
     // Do double buffering to reduce flickering
+    // use std.Io.Writer.fixed
 
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_file = std.fs.File.stdout();
@@ -66,11 +68,12 @@ pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_reso
     try startBatch(stdout);
 
     for (0..State.display_height) |y| {
+        try cursor.goTo(stdout, 1, y + 1); // Terminal coordinates are 1-based
         for (0..State.display_width) |x| {
             const pixel = display[y * State.display_width + x];
-            try cursor.goTo(stdout, x, y);
             try color.bg256(stdout, if (pixel == 1) .white else .black);
-            try stdout.print(" ", .{});
+            try color.fg256(stdout, if (pixel == 1) .black else .white);
+            try stdout.print("  ", .{});
         }
     }
 
@@ -78,6 +81,7 @@ pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_reso
 }
 
 pub fn setKeys(self: *ConsoleFrontend, keys: []bool) void {
+    const stdin = std.fs.File.stdin();
     const next = events.nextWithTimeout(stdin, 10) catch unreachable;
     switch (next) {
         .key => |k| switch (k.code) {
@@ -109,6 +113,8 @@ fn startBatch(stdout: *std.Io.Writer) !void {
 }
 
 fn flushBatch(stdout: *std.Io.Writer) !void {
+    try stdout.flush();
+
     // Disable synchronized mode
     try stdout.print("{s}", .{utils.comptimeCsi("?2026l", .{})});
 }
