@@ -60,7 +60,7 @@ pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_reso
     // Do double buffering to reduce flickering
     // use std.Io.Writer.fixed
 
-    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_buffer: [50000]u8 = undefined;
     var stdout_file = std.fs.File.stdout();
     var stdout_writer = stdout_file.writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
@@ -73,11 +73,12 @@ pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_reso
             const pixel = display[y * State.display_width + x];
             try color.bg256(stdout, if (pixel == 1) .white else .black);
             try color.fg256(stdout, if (pixel == 1) .black else .white);
-            try stdout.print("  ", .{});
+            try stdout.print(" ", .{});
         }
     }
 
     try flushBatch(stdout);
+    try stdout.flush();
 }
 
 pub fn setKeys(self: *ConsoleFrontend, keys: []bool) void {
@@ -113,8 +114,6 @@ fn startBatch(stdout: *std.Io.Writer) !void {
 }
 
 fn flushBatch(stdout: *std.Io.Writer) !void {
-    try stdout.flush();
-
     // Disable synchronized mode
     try stdout.print("{s}", .{utils.comptimeCsi("?2026l", .{})});
 }
