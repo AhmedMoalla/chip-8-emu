@@ -119,8 +119,10 @@ fn waitForTargetFPS(self: *RaylibFrontend) void {
     self.previous_time = self.current_time;
 }
 
-pub fn playSound(self: RaylibFrontend) void {
-    rl.playSound(self.sound);
+pub fn playSound(self: RaylibFrontend, sound_timer: u8) void {
+    if (sound_timer > 0) {
+        rl.playSound(self.sound);
+    }
 }
 
 pub fn setKeys(self: *RaylibFrontend, keys: []bool) void {

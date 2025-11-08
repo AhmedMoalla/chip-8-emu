@@ -42,11 +42,11 @@ pub const Frontend = union(enum) {
         }
     }
 
-    pub fn playSound(self: Frontend) void {
-        switch (self) {
-            inline else => |impl| {
-                if (@hasDecl(@TypeOf(impl), "playSound")) {
-                    impl.playSound();
+    pub fn playSound(self: *Frontend, sound_timer: u8) void {
+        switch (self.*) {
+            inline else => |*impl| {
+                if (@hasDecl(@TypeOf(impl.*), "playSound")) {
+                    impl.playSound(sound_timer);
                 }
             },
         }

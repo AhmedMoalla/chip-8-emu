@@ -16,6 +16,7 @@ const key_release_timeout = 50 * std.time.ns_per_ms;
 
 raw_term: term.RawTerm,
 should_stop: bool = false,
+flip_colors: bool = false,
 
 key_releaser: PosixKeyReleaser,
 
@@ -61,7 +62,7 @@ pub fn shouldStop(self: ConsoleFrontend) bool {
     return self.should_stop;
 }
 
-pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_resolution]u8) !void {
+pub fn draw(self: *ConsoleFrontend, should_draw: bool, display: [State.display_resolution]u8) !void {
     if (!should_draw) return;
 
     var stdout_buffer: [50000]u8 = undefined;
@@ -75,14 +76,23 @@ pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_reso
         try cursor.goTo(stdout, 1, y + 1); // Terminal coordinates are 1-based
         for (0..State.display_width) |x| {
             const pixel = display[y * State.display_width + x];
-            try color.bg256(stdout, if (pixel == 1) .white else .black);
-            try color.fg256(stdout, if (pixel == 1) .black else .white);
+            if (self.flip_colors) {
+                try color.bg256(stdout, if (pixel == 1) .black else .white);
+                try color.fg256(stdout, if (pixel == 1) .white else .black);
+            } else {
+                try color.bg256(stdout, if (pixel == 1) .white else .black);
+                try color.fg256(stdout, if (pixel == 1) .black else .white);
+            }
             try stdout.print(" ", .{});
         }
     }
 
     try flushBatch(stdout);
     try stdout.flush();
+}
+
+pub fn playSound(self: *ConsoleFrontend, sound_timer: u8) void {
+    self.flip_colors = sound_timer > 0;
 }
 
 const PosixKeyReleaser = struct {
