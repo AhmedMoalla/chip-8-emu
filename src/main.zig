@@ -44,7 +44,6 @@ pub fn main() !void {
         if (state.sound_timer > 0) {
             front.playSound();
         }
-        @memset(&state.keys, false);
     }
 }
 

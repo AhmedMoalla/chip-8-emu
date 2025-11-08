@@ -12,15 +12,19 @@ const f = @import("Frontend.zig");
 const FrontendOptions = f.FrontendOptions;
 
 const ConsoleFrontend = @This();
+const key_release_timeout = 50 * std.time.ns_per_ms;
 
 raw_term: term.RawTerm,
 should_stop: bool = false,
 
-pub fn init(_: std.mem.Allocator, _: anytype) !ConsoleFrontend {
+key_releaser: PosixKeyReleaser,
+
+pub fn init(allocator: std.mem.Allocator, _: anytype) !ConsoleFrontend {
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_file = std.fs.File.stdout();
     var stdout_writer = stdout_file.writer(&stdout_buffer);
     const stdout = &stdout_writer.interface;
+
     const stdin = std.fs.File.stdin();
     if (!std.posix.isatty(stdin.handle)) {
         try stdout.print("The current file descriptor is not a referring to a terminal.\n", .{});
@@ -35,6 +39,7 @@ pub fn init(_: std.mem.Allocator, _: anytype) !ConsoleFrontend {
 
     return ConsoleFrontend{
         .raw_term = raw_term,
+        .key_releaser = try PosixKeyReleaser.init(allocator, key_release_timeout),
     };
 }
 
@@ -49,6 +54,7 @@ pub fn deinit(self: *ConsoleFrontend) void {
     term.exitAlternateScreen(stdout) catch {};
     color.resetAll(stdout) catch {};
     stdout.flush() catch {};
+    self.key_releaser.deinit();
 }
 
 pub fn shouldStop(self: ConsoleFrontend) bool {
@@ -57,8 +63,6 @@ pub fn shouldStop(self: ConsoleFrontend) bool {
 
 pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_resolution]u8) !void {
     if (!should_draw) return;
-    // Do double buffering to reduce flickering
-    // use std.Io.Writer.fixed
 
     var stdout_buffer: [50000]u8 = undefined;
     var stdout_file = std.fs.File.stdout();
@@ -81,7 +85,55 @@ pub fn draw(_: *ConsoleFrontend, should_draw: bool, display: [State.display_reso
     try stdout.flush();
 }
 
+const PosixKeyReleaser = struct {
+    const KeyReleaseTimeoutHashMap = std.AutoArrayHashMap(u21, u64);
+
+    key_release_timeout: u64,
+    key_release_timer: std.time.Timer,
+    key_release_timeouts: KeyReleaseTimeoutHashMap,
+
+    pub fn init(allocator: std.mem.Allocator, release_timeout: u64) !PosixKeyReleaser {
+        return .{
+            .key_release_timeout = release_timeout,
+            .key_release_timer = try std.time.Timer.start(),
+            .key_release_timeouts = KeyReleaseTimeoutHashMap.init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *PosixKeyReleaser) void {
+        self.key_release_timeouts.deinit();
+    }
+
+    pub fn releaseKeysAfterTimeout(self: *PosixKeyReleaser, keys: []bool) void {
+        const now = self.key_release_timer.read();
+
+        // Iterate backwards so we can remove items safely during iteration
+        var i: usize = self.key_release_timeouts.count();
+        const chars = self.key_release_timeouts.keys();
+        const values = self.key_release_timeouts.values();
+        while (i > 0) {
+            i -= 1;
+            const char = chars[i];
+            const pressed_time = values[i];
+
+            if (now - pressed_time >= self.key_release_timeout) {
+                keys[charToKeyIndex(char)] = false;
+                _ = self.key_release_timeouts.swapRemove(char);
+            }
+        }
+    }
+
+    pub fn reportKeyPress(self: *PosixKeyReleaser, char: u21) void {
+        const result = self.key_release_timeouts.getOrPut(char) catch unreachable;
+        if (!result.found_existing) {
+            result.value_ptr.* = self.key_release_timer.read();
+        }
+    }
+};
+
 pub fn setKeys(self: *ConsoleFrontend, keys: []bool) void {
+    self.key_releaser.releaseKeysAfterTimeout(keys);
+
     const stdin = std.fs.File.stdin();
     const next = events.nextWithTimeout(stdin, 10) catch unreachable;
     switch (next) {
@@ -93,19 +145,31 @@ pub fn setKeys(self: *ConsoleFrontend, keys: []bool) void {
                 }
 
                 if (char >= 'a' and char <= 'f') {
-                    const index: usize = @intCast(0xA + (char - 'a'));
-                    keys[index] = true;
+                    keys[charToKeyIndex(char)] = true;
+                    self.key_releaser.reportKeyPress(char);
                 }
 
                 if (char >= '0' and char <= '9') {
-                    const index: usize = @intCast(char - '0');
-                    keys[index] = true;
+                    keys[charToKeyIndex(char)] = true;
+                    self.key_releaser.reportKeyPress(char);
                 }
             },
             else => {},
         },
         else => {},
     }
+}
+
+fn charToKeyIndex(char: u21) usize {
+    if (char >= 'a' and char <= 'f') {
+        return @intCast(0xA + (char - 'a'));
+    }
+
+    if (char >= '0' and char <= '9') {
+        return @intCast(char - '0');
+    }
+
+    unreachable;
 }
 
 fn startBatch(stdout: *std.Io.Writer) !void {
@@ -116,11 +180,4 @@ fn startBatch(stdout: *std.Io.Writer) !void {
 fn flushBatch(stdout: *std.Io.Writer) !void {
     // Disable synchronized mode
     try stdout.print("{s}", .{utils.comptimeCsi("?2026l", .{})});
-}
-
-fn stdoutWriter() std.Io.Writer {
-    var stdout_buffer: [1]u8 = undefined;
-    var stdout_file = std.fs.File.stdout();
-    const stdout_writer = stdout_file.writer(&stdout_buffer);
-    return stdout_writer.interface;
 }
